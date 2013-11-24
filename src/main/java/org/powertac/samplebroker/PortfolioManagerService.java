@@ -384,6 +384,7 @@ implements PortfolioManager, Initializable, Activatable
   {
     if (customerSubscriptions.size() == 0) {
       // we (most likely) have no tariffs
+    	System.out.println("Creating Initial Tarrifs...");
       createInitialTariffs();
     }
     else {
@@ -397,7 +398,9 @@ implements PortfolioManager, Initializable, Activatable
   private void createInitialTariffs ()
   {
     // remember that market prices are per mwh, but tariffs are by kwh
+	
     double marketPrice = marketManager.getMeanMarketPrice() / 1000.0;
+    System.out.println("Mean market price: " + marketPrice);
     // for each power type representing a customer population,
     // create a tariff that's better than what's available
     for (PowerType pt : customerProfiles.keySet()) {
@@ -422,6 +425,7 @@ implements PortfolioManager, Initializable, Activatable
       customerSubscriptions.put(spec, new HashMap<CustomerInfo, CustomerRecord>());
       tariffRepo.addSpecification(spec);
       brokerContext.sendMessage(spec);
+      System.out.println("Spec: " + spec);
     }
   }
 
