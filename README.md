@@ -1,7 +1,7 @@
 Power TAC Sample Broker
 =======================  
 yooooooohoooo@@@@@@@@@@@@@@@@@@@@@@@@@22
-
+paparia
 dddddddddddddddddddddddddddddddddddddddddddddddddd!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
 The sample broker is intended to help broker developers by providing both a foundation that interfaces correctly with the Power TAC infrastructure, and an example of a working broker agent. It handles all message types and operates in both wholesale and retail markets. It issues a set of tariffs as soon as possible, one for each PowerType detected in the customer records given in the bootstrap dataset. It then trades in the wholesale market using essentially the same strategy as the default broker. 
