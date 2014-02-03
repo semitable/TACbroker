@@ -430,7 +430,19 @@ implements PortfolioManager, Initializable, Activatable
       System.out.println("Spec: " + spec);
     }
   }
-
+private void printTarrifRepo(){
+	System.out.println("---371---");
+	for (TariffSpecification spec :
+        tariffRepo.findAllTariffSpecifications()) {
+		System.out.println("-----");
+		System.out.println("Offered By: " + spec.getBroker());
+		System.out.println("Rate: " + spec.getRates());
+		System.out.println("PowerType: " + spec.getPowerType());
+		System.out.println("-----");
+		
+	}
+	System.out.println("---end---");
+}
   // Checks to see whether our tariffs need fine-tuning
   private void improveTariffs()
   {
@@ -439,12 +451,7 @@ implements PortfolioManager, Initializable, Activatable
     int timeslotIndex = timeslotRepo.currentTimeslot().getSerialNumber();
     System.out.println("TimeSlot Index: " + timeslotIndex);
     if (371 == timeslotIndex) {
-    	
-      System.out.println("--371---");
-  	  for (Tariff trf : tariffRepo.findAllTariffs())
-  		  System.out.println("Tariff: " + trf.toString());
-  	  System.out.println("--end---");
-    	
+      printTarrifRepo(); //Adding This to make some sense
       for (TariffSpecification spec :
            tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())) {
     	
