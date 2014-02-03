@@ -26,6 +26,7 @@ import org.powertac.common.Broker;
 import org.powertac.common.Competition;
 import org.powertac.common.CustomerInfo;
 import org.powertac.common.Rate;
+import org.powertac.common.Tariff;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.TariffTransaction;
 import org.powertac.common.TimeService;
@@ -440,8 +441,8 @@ implements PortfolioManager, Initializable, Activatable
     if (371 == timeslotIndex) {
     	
       System.out.println("--371---");
-  	  for (TariffSpecification spec : tariffRepo.findAllTariffSpecifications())
-  		  System.out.println(spec);
+  	  for (Tariff trf : tariffRepo.findAllTariffs())
+  		  System.out.println(trf);
   	  System.out.println("--end---");
     	
       for (TariffSpecification spec :
