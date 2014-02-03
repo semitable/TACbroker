@@ -433,15 +433,21 @@ implements PortfolioManager, Initializable, Activatable
   // Checks to see whether our tariffs need fine-tuning
   private void improveTariffs()
   {
+	
     // quick magic-number hack to inject a balancing order
     int timeslotIndex = timeslotRepo.currentTimeslot().getSerialNumber();
     System.out.println("TimeSlot Index: " + timeslotIndex);
     if (371 == timeslotIndex) {
+    	
+      System.out.println("--371---");
+  	  for (TariffSpecification spec : tariffRepo.findAllTariffSpecifications())
+  		  System.out.println(spec);
+  	  System.out.println("--end---");
+    	
       for (TariffSpecification spec :
            tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())) {
-    	  System.out.println("--371---");
-    	  System.out.println(spec);
-    	  System.out.println("--end---");
+    	
+    	
         if (PowerType.INTERRUPTIBLE_CONSUMPTION == spec.getPowerType()) {
         
           BalancingOrder order = new BalancingOrder(brokerContext.getBroker(),
