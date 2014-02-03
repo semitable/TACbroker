@@ -404,7 +404,7 @@ implements PortfolioManager, Initializable, Activatable
     // for each power type representing a customer population,
     // create a tariff that's better than what's available
     for (PowerType pt : customerProfiles.keySet()) {
-    	
+    
       // we'll just do fixed-rate tariffs for now
       double rateValue;
       if (pt.isConsumption())
@@ -439,11 +439,16 @@ implements PortfolioManager, Initializable, Activatable
     if (371 == timeslotIndex) {
       for (TariffSpecification spec :
            tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())) {
+    	  System.out.println("--371---");
+    	  System.out.println(spec);
+    	  System.out.println("--end---");
         if (PowerType.INTERRUPTIBLE_CONSUMPTION == spec.getPowerType()) {
+        
           BalancingOrder order = new BalancingOrder(brokerContext.getBroker(),
                                                     spec, 
                                                     0.5,
                                                     spec.getRates().get(0).getMinValue() * 0.9);
+          
           brokerContext.sendMessage(order);
         }
       }
