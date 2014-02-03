@@ -442,7 +442,7 @@ implements PortfolioManager, Initializable, Activatable
     	
       System.out.println("--371---");
   	  for (Tariff trf : tariffRepo.findAllTariffs())
-  		  System.out.println(trf);
+  		  System.out.println("Tariff: " + trf.toString());
   	  System.out.println("--end---");
     	
       for (TariffSpecification spec :
