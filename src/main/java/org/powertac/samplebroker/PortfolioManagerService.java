@@ -257,6 +257,16 @@ implements PortfolioManager, Initializable, Activatable
     }
     return -result; // convert to needed energy account balance
   }
+  public int collectSubscribers ()
+  {
+	    int result = 0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	        result += record.subscribedPopulation; //Sum up all the subscribers
+	      }
+	    }
+	    return result;
+  }
 
   // -------------- Message handlers -------------------
   /**
@@ -325,7 +335,7 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage(TariffTransaction ttx)
   {
-	  printTx(ttx); //printing the transaction
+	  //printTx(ttx); //printing the transaction
     // make sure we have this tariff
     TariffSpecification newSpec = ttx.getTariffSpec();
     if (newSpec == null) {
@@ -423,6 +433,7 @@ implements PortfolioManager, Initializable, Activatable
   {
 	//Beginning of timeslot
 	printTimeSlot(); //we print the timeslot #
+	System.out.println("Current subscribers: " + collectSubscribers());
     if (customerSubscriptions.size() == 0) { //Needs fixing
       // we (most likely) have no tariffs
     	System.out.println("Creating Initial Tarrifs...");
