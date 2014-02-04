@@ -465,9 +465,9 @@ public int getTotalCustomers()
   {
 	//Beginning of timeslot
 	printTimeSlot(); //we print the timeslot #
-	System.out.println("Current subscribers: " + collectSubscribers() + "out of " + getTotalCustomers());
-	System.out.println("Current production: " + getEProduced(timeslotIndex));
-	System.out.println("Current consumption: " + getEConsumed(timeslotIndex));
+	System.out.println("Current subscribers: " + collectSubscribers() + " out of " + getTotalCustomers());
+	System.out.println("Current production: " + getEProduced(timeslotIndex) + "kwh.");
+	System.out.println("Current consumption: " + getEConsumed(timeslotIndex)+ "kwh.");
     if (customerSubscriptions.size() == 0) { //Needs fixing
       // we (most likely) have no tariffs
     	System.out.println("Creating Initial Tarrifs...");
@@ -559,7 +559,7 @@ public int getTotalCustomers()
       //(but not necessarily published) before revoking the original tariff. All subscriptions to the original
      // tariff will be moved to the superseding tariff during the next tariff-publication cycle.
       if (null != oldc)
-        spec.addSupersedes(oldc.getId()); //So we superseed the old tariff
+        spec.addSupersedes(oldc.getId()); //So we supersede the old tariff
       tariffRepo.addSpecification(spec);
       brokerContext.sendMessage(spec);
       // and then revoke the old one
