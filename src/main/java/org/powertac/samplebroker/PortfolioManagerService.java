@@ -161,6 +161,15 @@ implements PortfolioManager, Initializable, Activatable
 		System.out.println("--------------");
 
 	}
+	private void printTx(TariffTransaction tx)
+	{
+		System.out.println("--Tariff Transaction--");
+		System.out.println("Tx Type: "+ tx.getTxType());
+		System.out.println("Population Type: " + tx.getCustomerInfo());
+		System.out.println("Population Count: " + tx.getCustomerCount());
+		System.out.println("---------------------");
+		
+	}
 	private void printTimeSlot(){
 		System.out.println("====================");
 	    System.out.println("TimeSlot: " + timeslotRepo.currentTimeslot().getSerialNumber());
@@ -297,7 +306,7 @@ implements PortfolioManager, Initializable, Activatable
       tariffRepo.addSpecification(spec);
       
       //Whenever a new Tariff Specification is published we print it.
-      printTariff(spec);
+
     }
   }
   
@@ -316,6 +325,7 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage(TariffTransaction ttx)
   {
+	  printTx(ttx); //printing the transaction
     // make sure we have this tariff
     TariffSpecification newSpec = ttx.getTariffSpec();
     if (newSpec == null) {
@@ -332,7 +342,6 @@ implements PortfolioManager, Initializable, Activatable
     TariffTransaction.Type txType = ttx.getTxType();
     CustomerRecord record = getCustomerRecordByTariff(ttx.getTariffSpec(),
                                                       ttx.getCustomerInfo());
-    
     if (TariffTransaction.Type.SIGNUP == txType) {
       // keep track of customer counts
       record.signup(ttx.getCustomerCount());
@@ -635,8 +644,8 @@ implements PortfolioManager, Initializable, Activatable
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
     
-    // we assume here that timeslot index always matches the number of
-    // timeslots that have passed since the beginning of the simulation.
+    // we assume here that time slot index always matches the number of
+    // time slots that have passed since the beginning of the simulation.
     int getIndex (Instant when)
     {
       int result = (int)((when.getMillis() - timeService.getBase()) /
