@@ -267,7 +267,39 @@ implements PortfolioManager, Initializable, Activatable
 	    }
 	    return result;
   }
-
+  
+  // Customer produces or consumes power. We assume the kwh value is negative
+  // for production, positive for consumption
+  public double getEConsumed(int index)
+  {
+	    double result = 0.0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if(record.getUsage(index) > 0)
+	    		  result += record.getUsage(index); //Sum up all the consumption (Positive)
+	      }
+	    }
+	    return result; 
+  }
+  public double getEProduced(int index)
+  {
+	    double result = 0.0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if(record.getUsage(index) < 0)
+	    		  result += record.getUsage(index); //Sum up all the production (Negative)
+	      }
+	    }
+	    return result; 
+}
+public int getTotalCustomers()
+{
+	int result = 0;
+	for ( CustomerInfo cons : customerRepo.list()){
+		result += cons.getPopulation();
+	}
+	return result;
+}
   // -------------- Message handlers -------------------
   /**
    * Handles CustomerBootstrapData by populating the customer model 
@@ -433,7 +465,9 @@ implements PortfolioManager, Initializable, Activatable
   {
 	//Beginning of timeslot
 	printTimeSlot(); //we print the timeslot #
-	System.out.println("Current subscribers: " + collectSubscribers());
+	System.out.println("Current subscribers: " + collectSubscribers() + "out of " + getTotalCustomers());
+	System.out.println("Current production: " + getEProduced(timeslotIndex));
+	System.out.println("Current consumption: " + getEConsumed(timeslotIndex));
     if (customerSubscriptions.size() == 0) { //Needs fixing
       // we (most likely) have no tariffs
     	System.out.println("Creating Initial Tarrifs...");
