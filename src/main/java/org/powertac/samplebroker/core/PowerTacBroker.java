@@ -197,6 +197,7 @@ implements BrokerContext
     }
 
     // set up the adapter
+    System.out.println("Agent name: " + username);
     adapter = new BrokerAdapter(username);
     brokerRepo.add(adapter); // to resolve incoming messages correctly
 

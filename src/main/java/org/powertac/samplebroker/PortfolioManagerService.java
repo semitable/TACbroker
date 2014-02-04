@@ -26,6 +26,7 @@ import org.powertac.common.Broker;
 import org.powertac.common.Competition;
 import org.powertac.common.CustomerInfo;
 import org.powertac.common.Rate;
+import org.powertac.common.Tariff;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.TariffTransaction;
 import org.powertac.common.TimeService;
@@ -145,7 +146,35 @@ implements PortfolioManager, Initializable, Activatable
       context.registerMessageHandler(this, messageType);
     }
   }
-  
+  //----------------printing---------------------
+  private void printTariffRepo(){
+		for (TariffSpecification spec :
+	        tariffRepo.findAllTariffSpecifications()) {
+			printTariff(spec);
+		}
+	}
+	private void printTariff(TariffSpecification spec){
+		System.out.println("--Tariff Spec--");
+		System.out.println("Offered By: " + spec.getBroker());
+		System.out.println("Rate: " + spec.getRates());
+		System.out.println("PowerType: " + spec.getPowerType());
+		System.out.println("--------------");
+
+	}
+	private void printTx(TariffTransaction tx)
+	{
+		System.out.println("--Tariff Transaction--");
+		System.out.println("Tx Type: "+ tx.getTxType());
+		System.out.println("Population Type: " + tx.getCustomerInfo());
+		System.out.println("Population Count: " + tx.getCustomerCount());
+		System.out.println("---------------------");
+		
+	}
+	private void printTimeSlot(){
+		System.out.println("====================");
+	    System.out.println("TimeSlot: " + timeslotRepo.currentTimeslot().getSerialNumber());
+	    System.out.println("====================");
+	}
   // -------------- data access ------------------
   
   /**
@@ -228,7 +257,49 @@ implements PortfolioManager, Initializable, Activatable
     }
     return -result; // convert to needed energy account balance
   }
-
+  public int collectSubscribers ()
+  {
+	    int result = 0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	        result += record.subscribedPopulation; //Sum up all the subscribers
+	      }
+	    }
+	    return result;
+  }
+  
+  // Customer produces or consumes power. We assume the kwh value is negative
+  // for production, positive for consumption
+  public double getEConsumed(int index)
+  {
+	    double result = 0.0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if(record.getUsage(index) > 0)
+	    		  result += record.getUsage(index); //Sum up all the consumption (Positive)
+	      }
+	    }
+	    return result; 
+  }
+  public double getEProduced(int index)
+  {
+	    double result = 0.0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if(record.getUsage(index) < 0)
+	    		  result += record.getUsage(index); //Sum up all the production (Negative)
+	      }
+	    }
+	    return result; 
+}
+public int getTotalCustomers()
+{
+	int result = 0;
+	for ( CustomerInfo cons : customerRepo.list()){
+		result += cons.getPopulation();
+	}
+	return result;
+}
   // -------------- Message handlers -------------------
   /**
    * Handles CustomerBootstrapData by populating the customer model 
@@ -258,6 +329,7 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage (TariffSpecification spec)
   {
+      printTariff(spec);
     Broker theBroker = spec.getBroker();
     if (brokerContext.getBrokerUsername().equals(theBroker.getUsername())) {
       if (theBroker != brokerContext)
@@ -274,6 +346,9 @@ implements PortfolioManager, Initializable, Activatable
       // otherwise, keep track of competing tariffs, and record in the repo
       addCompetingTariff(spec);
       tariffRepo.addSpecification(spec);
+      
+      //Whenever a new Tariff Specification is published we print it.
+
     }
   }
   
@@ -292,6 +367,7 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage(TariffTransaction ttx)
   {
+	  //printTx(ttx); //printing the transaction
     // make sure we have this tariff
     TariffSpecification newSpec = ttx.getTariffSpec();
     if (newSpec == null) {
@@ -308,7 +384,6 @@ implements PortfolioManager, Initializable, Activatable
     TariffTransaction.Type txType = ttx.getTxType();
     CustomerRecord record = getCustomerRecordByTariff(ttx.getTariffSpec(),
                                                       ttx.getCustomerInfo());
-    
     if (TariffTransaction.Type.SIGNUP == txType) {
       // keep track of customer counts
       record.signup(ttx.getCustomerCount());
@@ -341,6 +416,9 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage (TariffRevoke tr)
   {
+      System.out.println("Revoking the following Tariff: "); //printing the tariff to be revoked
+	  printTariff(tariffRepo.findSpecificationById(tr.getTariffId()));
+	  
     Broker source = tr.getBroker();
     log.info("Revoke tariff " + tr.getTariffId()
              + " from " + tr.getBroker().getUsername());
@@ -350,6 +428,9 @@ implements PortfolioManager, Initializable, Activatable
       log.info("clear out competing tariff");
       TariffSpecification original =
               tariffRepo.findSpecificationById(tr.getTariffId());
+      
+
+	  
       if (null == original) {
         log.warn("Original tariff " + tr.getTariffId() + " not found");
         return;
@@ -382,8 +463,14 @@ implements PortfolioManager, Initializable, Activatable
   @Override // from Activatable
   public void activate (int timeslotIndex)
   {
-    if (customerSubscriptions.size() == 0) {
+	//Beginning of timeslot
+	printTimeSlot(); //we print the timeslot #
+	System.out.println("Current subscribers: " + collectSubscribers() + " out of " + getTotalCustomers());
+	System.out.println("Current production: " + getEProduced(timeslotIndex) + "kwh.");
+	System.out.println("Current consumption: " + getEConsumed(timeslotIndex)+ "kwh.");
+    if (customerSubscriptions.size() == 0) { //Needs fixing
       // we (most likely) have no tariffs
+    	System.out.println("Creating Initial Tarrifs...");
       createInitialTariffs();
     }
     else {
@@ -397,10 +484,12 @@ implements PortfolioManager, Initializable, Activatable
   private void createInitialTariffs ()
   {
     // remember that market prices are per mwh, but tariffs are by kwh
+	
     double marketPrice = marketManager.getMeanMarketPrice() / 1000.0;
     // for each power type representing a customer population,
     // create a tariff that's better than what's available
     for (PowerType pt : customerProfiles.keySet()) {
+    
       // we'll just do fixed-rate tariffs for now
       double rateValue;
       if (pt.isConsumption())
@@ -428,17 +517,22 @@ implements PortfolioManager, Initializable, Activatable
   // Checks to see whether our tariffs need fine-tuning
   private void improveTariffs()
   {
+	
     // quick magic-number hack to inject a balancing order
     int timeslotIndex = timeslotRepo.currentTimeslot().getSerialNumber();
-    if (371 == timeslotIndex) {
+    if (371 == timeslotIndex) { //In time slot 371 the guy here asks for a balancing order.
       for (TariffSpecification spec :
            tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())) {
-        if (PowerType.INTERRUPTIBLE_CONSUMPTION == spec.getPowerType()) {
+    	
+    	
+        if (PowerType.INTERRUPTIBLE_CONSUMPTION == spec.getPowerType()) { //Yoda Condition? :p
+        
           BalancingOrder order = new BalancingOrder(brokerContext.getBroker(),
                                                     spec, 
                                                     0.5,
                                                     spec.getRates().get(0).getMinValue() * 0.9);
-          brokerContext.sendMessage(order);
+          
+          brokerContext.sendMessage(order); //Sending Balancing order.. TODO: CHECK
         }
       }
     }
@@ -461,11 +555,14 @@ implements PortfolioManager, Initializable, Activatable
                   .withPeriodicPayment(defaultPeriodicPayment * 1.1);
       Rate rate = new Rate().withValue(rateValue);
       spec.addRate(rate);
+      //The superseding tariff must be received
+      //(but not necessarily published) before revoking the original tariff. All subscriptions to the original
+     // tariff will be moved to the superseding tariff during the next tariff-publication cycle.
       if (null != oldc)
-        spec.addSupersedes(oldc.getId());
+        spec.addSupersedes(oldc.getId()); //So we supersede the old tariff
       tariffRepo.addSpecification(spec);
       brokerContext.sendMessage(spec);
-      // revoke the old one
+      // and then revoke the old one
       TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), oldc);
       brokerContext.sendMessage(revoke);
     }
@@ -592,8 +689,8 @@ implements PortfolioManager, Initializable, Activatable
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
     
-    // we assume here that timeslot index always matches the number of
-    // timeslots that have passed since the beginning of the simulation.
+    // we assume here that time slot index always matches the number of
+    // time slots that have passed since the beginning of the simulation.
     int getIndex (Instant when)
     {
       int result = (int)((when.getMillis() - timeService.getBase()) /
