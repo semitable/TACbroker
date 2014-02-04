@@ -278,6 +278,7 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage (TariffSpecification spec)
   {
+      printTariff(spec);
     Broker theBroker = spec.getBroker();
     if (brokerContext.getBrokerUsername().equals(theBroker.getUsername())) {
       if (theBroker != brokerContext)
@@ -364,6 +365,8 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage (TariffRevoke tr)
   {
+      System.out.println("Revoking the following Tariff: "); //printing the tariff to be revoked
+	  printTariff(tariffRepo.findSpecificationById(tr.getTariffId()));
 	  
     Broker source = tr.getBroker();
     log.info("Revoke tariff " + tr.getTariffId()
@@ -375,8 +378,7 @@ implements PortfolioManager, Initializable, Activatable
       TariffSpecification original =
               tariffRepo.findSpecificationById(tr.getTariffId());
       
-      System.out.println("Revoking the following Tariff: "); //printing the tariff to be revoked
-	  printTariff(original);
+
 	  
       if (null == original) {
         log.warn("Original tariff " + tr.getTariffId() + " not found");
