@@ -499,9 +499,11 @@ public int getTotalCustomers()
   private double evaluateTariff(TariffSpecification spec){ //Simulated Cost for a week for customer //TODO:Might Need improvement!
 
 	  double result = 0;
+	  if(customerSubscriptions.get(spec) == null)
+		  return 0;
 	  int n = customerSubscriptions.get(spec).size();
-	  if(n == 0)
-		  System.out.println("Failed at evaluating Tariff");
+	  if(n == 0){
+		  System.out.println("Failed at evaluating Tariff"); return 0;}
 	  for (CustomerRecord c : customerSubscriptions.get(spec).values())
 		  result += evaluateTariff(c, spec);
 	  return result/n;
@@ -527,7 +529,7 @@ public int getTotalCustomers()
       if (pt.isConsumption())
         rateValue = ((marketPrice + fixedPerKwh) * (1.0 + defaultMargin));
       else
-        rateValue = (-1.0 * marketPrice / (1.0 + defaultMargin));
+        rateValue = (-0.1 * marketPrice / (1.0 + defaultMargin));
         //rateValue = -2.0 * marketPrice;
       if (pt.isInterruptible())
         rateValue *= 0.7; // Magic number!! price break for interruptible
@@ -577,7 +579,7 @@ public int getTotalCustomers()
               new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
                   .withPeriodicPayment(periodic);
       Rate rate = new Rate().withValue(rateValue);
-      spec.addRate(rate);
+      newspec.addRate(rate);
       
       
       newspec.addSupersedes(spec.getId()); //So we supersede the old tariff
@@ -603,7 +605,7 @@ private void worsen(TariffSpecification spec)
             new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
                 .withPeriodicPayment(periodic);
     Rate rate = new Rate().withValue(rateValue);
-    spec.addRate(rate);
+    newspec.addRate(rate);
     
     
     newspec.addSupersedes(spec.getId()); //So we supersede the old tariff
