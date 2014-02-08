@@ -674,7 +674,7 @@ private void worsen(TariffSpecification spec)
     	
     	//now check our subscribed customers
     	double customerPercentage = collectSubscribers()/getTotalCustomers();
-    	
+
     	if(customerPercentage < 0.33) //TODO: better change this to customerPercentage < 1/numberofBrokers?
     	{
     		//We need to improve consumer prices;
@@ -881,6 +881,7 @@ private void worsen(TariffSpecification spec)
         log.warn("usage requested for negative index " + index);
         index = 0;
       }
+      System.out.println(" Usage: " + usage[getIndex(index)] + "subscribed population: " + subscribedPopulation);
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
     
