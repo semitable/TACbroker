@@ -654,6 +654,7 @@ private void worsen(TariffSpecification spec)
     				System.out.println("Trying to improve:");
     				printTariff(spec);
     				improve(spec);
+    				break;
     			}
     		}
     	}else if (predImbaPrcge < -0.1){ //much more energy produced than consumed, we need stop buying so much energy
@@ -664,6 +665,7 @@ private void worsen(TariffSpecification spec)
     				System.out.println("Trying to worsen:");
     				printTariff(spec);
     				worsen(spec);
+    				break;
     			}
     		}
     	}//else we are okay in imbalanced energy.
@@ -684,6 +686,7 @@ private void worsen(TariffSpecification spec)
     				System.out.println("Trying to improve:");
     				printTariff(spec);
     				improve(spec);
+    				break;
     			}
     		}
     	}else{
@@ -695,6 +698,7 @@ private void worsen(TariffSpecification spec)
     				System.out.println("Trying to worsen:");
     				printTariff(spec);
     				worsen(spec);
+    				break;
     			}
     		}
     		
