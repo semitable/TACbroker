@@ -495,6 +495,22 @@ public int getTotalCustomers()
 	  return result;
 	  
   }
+  
+  private double evaluateTariff(TariffSpecification spec){ //Simulated Cost for a week for customer //TODO:Might Need improvement!
+
+	  double result = 0;
+	  int n = customerSubscriptions.get(spec).size();
+	  if(n == 0)
+		  System.out.println("Failed at evaluating Tariff");
+	  for (CustomerRecord c : customerSubscriptions.get(spec).values())
+		  result += evaluateTariff(c, spec);
+	  return result/n;
+	  
+  }
+  
+  
+  
+  
   // Creates initial tariffs for the main power types. These are simple
   // fixed-rate two-part tariffs that give the broker a fixed margin.
   private void createInitialTariffs ()
@@ -529,7 +545,76 @@ public int getTotalCustomers()
       brokerContext.sendMessage(spec);
     }
   }
-
+  
+  private void improve(TariffSpecification spec)
+  {
+	  List<TariffSpecification >competition = competingTariffs.get(spec.getPowerType());
+	  if (competition == null)
+		  return; //no competition //?we might want to worsen()?
+	  double eval = evaluateTariff(spec);
+	  double best = eval;
+	  for (TariffSpecification comp : competition)
+	  {
+		  best = Math.max(evaluateTariff(comp), best);
+		  
+	  }
+	  if (eval == best)
+		  return; //no improvement needed//?we might want to worsen()?
+	  
+	  
+	  double rateValue, periodic;
+	  if(spec.getPowerType().isConsumption()){
+	      rateValue = spec.getRates().get(0).getValue() *0.95;
+	      periodic = spec.getPeriodicPayment()*0.9;
+	      }
+	  else{ //is production
+	      rateValue = spec.getRates().get(0).getValue() *1.1;
+	      periodic = spec.getPeriodicPayment()*0.9;
+	  }
+	    	  
+      
+      TariffSpecification newspec =
+              new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
+                  .withPeriodicPayment(periodic);
+      Rate rate = new Rate().withValue(rateValue);
+      spec.addRate(rate);
+      
+      
+      newspec.addSupersedes(spec.getId()); //So we supersede the old tariff
+      tariffRepo.addSpecification(newspec);
+      brokerContext.sendMessage(newspec);
+      // and then revoke the old one
+      TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), spec);
+      brokerContext.sendMessage(revoke);
+  }
+private void worsen(TariffSpecification spec)
+{
+  
+	  double rateValue, periodic;
+	  if(spec.getPowerType().isConsumption()){
+	      rateValue = spec.getRates().get(0).getValue() *1.1;
+	      periodic = spec.getPeriodicPayment()*1.1;
+	      }
+	  else{ //is production
+	      rateValue = spec.getRates().get(0).getValue() *0.9;
+	      periodic = spec.getPeriodicPayment()*1.1;
+	  }
+    TariffSpecification newspec =
+            new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
+                .withPeriodicPayment(periodic);
+    Rate rate = new Rate().withValue(rateValue);
+    spec.addRate(rate);
+    
+    
+    newspec.addSupersedes(spec.getId()); //So we supersede the old tariff
+    tariffRepo.addSpecification(newspec);
+    brokerContext.sendMessage(newspec);
+    // and then revoke the old one
+    TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), spec);
+    brokerContext.sendMessage(revoke);
+	
+	
+}
   // Checks to see whether our tariffs need fine-tuning
   private void improveTariffs()
   {
@@ -564,6 +649,7 @@ public int getTotalCustomers()
     			if(spec.getPowerType().isProduction())
     			{
     				//Improve The production Tariff
+    				improve(spec);
     			}
     		}
     	}else if (predImbaPrcge < -0.1){ //much more energy produced than consumed, we need stop buying so much energy
@@ -571,6 +657,7 @@ public int getTotalCustomers()
     			if(spec.getPowerType().isProduction())
     			{
     				//worsen the production tariff
+    				worsen(spec);
     			}
     		}
     	}//else we are okay in imbalanced energy.
@@ -588,6 +675,7 @@ public int getTotalCustomers()
     			if(spec.getPowerType().isConsumption())
     			{
     				//Improve tariff
+    				improve(spec);
     			}
     		}
     	}else{
@@ -596,6 +684,7 @@ public int getTotalCustomers()
     			if(spec.getPowerType().isConsumption())
     			{
     				//Worsen Tariff
+    				worsen(spec);
     			}
     		}
     		
