@@ -107,6 +107,7 @@ implements Initializable
    */
   public void handleMessage (Competition comp)
   {
+
     // TODO - process competition properties
   }
 

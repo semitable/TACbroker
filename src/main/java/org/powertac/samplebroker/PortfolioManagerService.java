@@ -49,6 +49,7 @@ import org.powertac.samplebroker.interfaces.PortfolioManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.powertac.common.TariffEvaluationHelper;
 /**
  * Handles portfolio-management responsibilities for the broker. This
  * includes composing and offering tariffs, keeping track of customers and their
@@ -147,7 +148,8 @@ implements PortfolioManager, Initializable, Activatable
     }
   }
   //----------------printing---------------------
-  private void printTariffRepo(){
+  @SuppressWarnings("unused")
+private void printTariffRepo(){
 		for (TariffSpecification spec :
 	        tariffRepo.findAllTariffSpecifications()) {
 			printTariff(spec);
@@ -161,6 +163,7 @@ implements PortfolioManager, Initializable, Activatable
 		System.out.println("--------------");
 
 	}
+	@SuppressWarnings("unused")
 	private void printTx(TariffTransaction tx)
 	{
 		System.out.println("--Tariff Transaction--");
@@ -479,6 +482,19 @@ public int getTotalCustomers()
     }
   }
   
+  
+  
+  
+  private double evaluateTariff(CustomerRecord c, TariffSpecification spec){ //Simulated Cost for a week for customer //TODO:Might Need improvement!
+
+	  TariffEvaluationHelper help = new TariffEvaluationHelper();
+	  Tariff tf= new Tariff(spec);
+	  tf.init();
+	  
+	  double result = help.estimateCost(tf, c.usage);
+	  return result;
+	  
+  }
   // Creates initial tariffs for the main power types. These are simple
   // fixed-rate two-part tariffs that give the broker a fixed margin.
   private void createInitialTariffs ()
@@ -520,10 +536,84 @@ public int getTotalCustomers()
 	
     // quick magic-number hack to inject a balancing order
     int timeslotIndex = timeslotRepo.currentTimeslot().getSerialNumber();
+    
+    
+    
+    
+    
+    if(timeslotIndex % 6 == 0)  //Timeslot before tariff publication
+    {
+
+    	//First check energy imbalance
+    	//Compute Estimated Energy Consumed for the next 6 timeslots so that we change our tariffs in 
+    	int i, consumePred=0, producePred=0;
+    	for (i = 0; i <6; i ++)
+    	{
+    		consumePred += getEConsumed(timeslotIndex+i+1);
+    		producePred += getEProduced(timeslotIndex+i+1); //negative
+    	}
+    	double predImbaPrcge = (consumePred+producePred)/(consumePred-producePred);
+    	
+    	if(predImbaPrcge >0.6)
+    		;//Give balancing order with >0 expectage
+    	else if (predImbaPrcge < -0.6)
+    		;//Give balancing order with <0 expectage ?
+
+    	if(predImbaPrcge > 0.1){ //much more Energy consumed than produced. We need to buy
+    		for (TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())){
+    			if(spec.getPowerType().isProduction())
+    			{
+    				//Improve The production Tariff
+    			}
+    		}
+    	}else if (predImbaPrcge < -0.1){ //much more energy produced than consumed, we need stop buying so much energy
+    		for (TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())){
+    			if(spec.getPowerType().isProduction())
+    			{
+    				//worsen the production tariff
+    			}
+    		}
+    	}//else we are okay in imbalanced energy.
+    	
+    	
+    	
+    	//now check our subscribed customers
+    	int customerPercentage = collectSubscribers()/getTotalCustomers();
+    	
+    	if(customerPercentage < 1/3) //TODO: better change this to customerPercentage < 1/numberofBrokers?
+    	{
+    		//We need to improve consumer prices;
+    		for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker()))
+    		{
+    			if(spec.getPowerType().isConsumption())
+    			{
+    				//Improve tariff
+    			}
+    		}
+    	}else{
+    		for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker()))
+    		{
+    			if(spec.getPowerType().isConsumption())
+    			{
+    				//Worsen Tariff
+    			}
+    		}
+    		
+    		
+    	}
+    	
+    	
+    	
+    }
+    
+    
+    
+    
+    
+    /*
     if (371 == timeslotIndex) { //In time slot 371 the guy here asks for a balancing order.
       for (TariffSpecification spec :
            tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())) {
-    	
     	
         if (PowerType.INTERRUPTIBLE_CONSUMPTION == spec.getPowerType()) { //Yoda Condition? :p
         
@@ -566,6 +656,7 @@ public int getTotalCustomers()
       TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), oldc);
       brokerContext.sendMessage(revoke);
     }
+    */
   }
 
   // ------------- test-support methods ----------------
@@ -617,6 +708,7 @@ public int getTotalCustomers()
     int subscribedPopulation = 0;
     double[] usage;
     double alpha = 0.3;
+    
     
     /**
      * Creates an empty record
@@ -702,5 +794,7 @@ public int getTotalCustomers()
     {
       return rawIndex % usage.length;
     }
+
   }
+
 }
