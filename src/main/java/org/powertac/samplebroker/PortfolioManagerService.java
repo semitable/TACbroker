@@ -646,7 +646,7 @@ private void worsen(TariffSpecification spec)
 
     	if(predImbaPrcge > 0.1){ //much more Energy consumed than produced. We need to buy
     		for (TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())){
-    			if(spec.getPowerType().isProduction())
+    			if(spec.getPowerType().isProduction() && spec.isValid())
     			{
     				//Improve The production Tariff
     				System.out.println("Trying to improve:");
@@ -656,7 +656,7 @@ private void worsen(TariffSpecification spec)
     		}
     	}else if (predImbaPrcge < -0.1){ //much more energy produced than consumed, we need stop buying so much energy
     		for (TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())){
-    			if(spec.getPowerType().isProduction())
+    			if(spec.getPowerType().isProduction() && spec.isValid())
     			{
     				//worsen the production tariff
     				System.out.println("Trying to worsen:");
@@ -671,12 +671,12 @@ private void worsen(TariffSpecification spec)
     	//now check our subscribed customers
     	double customerPercentage = collectSubscribers()/getTotalCustomers();
     	
-    	if(customerPercentage < 1/3) //TODO: better change this to customerPercentage < 1/numberofBrokers?
+    	if(customerPercentage < 0.33) //TODO: better change this to customerPercentage < 1/numberofBrokers?
     	{
     		//We need to improve consumer prices;
     		for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker()))
     		{
-    			if(spec.getPowerType().isConsumption())
+    			if(spec.getPowerType().isConsumption() && spec.isValid())
     			{
     				//Improve tariff
     				System.out.println("Trying to improve:");
@@ -687,7 +687,7 @@ private void worsen(TariffSpecification spec)
     	}else{
     		for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker()))
     		{
-    			if(spec.getPowerType().isConsumption())
+    			if(spec.getPowerType().isConsumption() && spec.isValid())
     			{
     				//Worsen Tariff
     				System.out.println("Trying to worsen:");
