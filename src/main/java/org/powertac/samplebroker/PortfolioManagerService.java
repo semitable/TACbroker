@@ -527,8 +527,8 @@ public int getTotalCustomers()
       if (pt.isConsumption())
         rateValue = ((marketPrice + fixedPerKwh) * (1.0 + defaultMargin));
       else
-        //rateValue = (-1.0 * marketPrice / (1.0 + defaultMargin));
-        rateValue = -2.0 * marketPrice;
+        rateValue = (-1.0 * marketPrice / (1.0 + defaultMargin));
+        //rateValue = -2.0 * marketPrice;
       if (pt.isInterruptible())
         rateValue *= 0.7; // Magic number!! price break for interruptible
       TariffSpecification spec =
@@ -649,6 +649,8 @@ private void worsen(TariffSpecification spec)
     			if(spec.getPowerType().isProduction())
     			{
     				//Improve The production Tariff
+    				System.out.println("Trying to improve:");
+    				printTariff(spec);
     				improve(spec);
     			}
     		}
@@ -657,6 +659,8 @@ private void worsen(TariffSpecification spec)
     			if(spec.getPowerType().isProduction())
     			{
     				//worsen the production tariff
+    				System.out.println("Trying to worsen:");
+    				printTariff(spec);
     				worsen(spec);
     			}
     		}
@@ -665,7 +669,7 @@ private void worsen(TariffSpecification spec)
     	
     	
     	//now check our subscribed customers
-    	int customerPercentage = collectSubscribers()/getTotalCustomers();
+    	double customerPercentage = collectSubscribers()/getTotalCustomers();
     	
     	if(customerPercentage < 1/3) //TODO: better change this to customerPercentage < 1/numberofBrokers?
     	{
@@ -675,6 +679,8 @@ private void worsen(TariffSpecification spec)
     			if(spec.getPowerType().isConsumption())
     			{
     				//Improve tariff
+    				System.out.println("Trying to improve:");
+    				printTariff(spec);
     				improve(spec);
     			}
     		}
@@ -684,6 +690,8 @@ private void worsen(TariffSpecification spec)
     			if(spec.getPowerType().isConsumption())
     			{
     				//Worsen Tariff
+    				System.out.println("Trying to worsen:");
+    				printTariff(spec);
     				worsen(spec);
     			}
     		}
