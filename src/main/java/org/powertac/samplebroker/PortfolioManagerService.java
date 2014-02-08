@@ -491,7 +491,7 @@ public int getTotalCustomers()
 	  Tariff tf= new Tariff(spec);
 	  tf.init();
 	  
-	  double result = help.estimateCost(tf, c.usage);
+	  double result = help.estimateCost(tf, c.usage.clone());
 	  return result;
 	  
   }
@@ -881,7 +881,7 @@ private void worsen(TariffSpecification spec)
         log.warn("usage requested for negative index " + index);
         index = 0;
       }
-      System.out.println(" Usage: " + usage[getIndex(index)] + "subscribed population: " + subscribedPopulation);
+      //System.out.println(" Usage: " + usage[getIndex(index)] + "subscribed population: " + subscribedPopulation);
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
     
