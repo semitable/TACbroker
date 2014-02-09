@@ -249,6 +249,7 @@ implements MarketManager, Initializable, Activatable
   {
 	  return weather.get(timeslotIndex);
   }
+  
 
   // ----------- per-timeslot activation ---------------
 
@@ -265,7 +266,13 @@ implements MarketManager, Initializable, Activatable
     for (Timeslot timeslot : timeslotRepo.enabledTimeslots()) {
       int index = (timeslot.getSerialNumber()) % broker.getUsageRecordLength();
       neededKWh = portfolioManager.collectUsage(index);
-      submitOrder(neededKWh, timeslot.getSerialNumber());
+	  if (timeslotRepo.currentTimeslot().getSerialNumber()==timeslotIndex){	//for the current time slot
+		  submitOrder(neededKWh, timeslot.getSerialNumber());
+	  }
+	  else{	//for future -not so urgent order
+		  int future_slot = timeslotRepo.currentTimeslot().getSerialNumber() - timeslot.getSerialNumber();
+		  submitOrder2(neededKWh, timeslot.getSerialNumber(),(1+future_slot)/24);    // #XRIZEI ANATHEORISI#
+	  }
     }
   }
 
@@ -290,6 +297,28 @@ implements MarketManager, Initializable, Activatable
     log.info("new order for " + neededMWh + " at " + limitPrice +
              " in timeslot " + timeslot);
     Order order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
+    lastOrder.put(timeslot, order);
+    broker.sendMessage(order);
+  }
+  
+  private void submitOrder2 (double neededKWh, int timeslot, float discount)
+  {
+    double neededMWh = neededKWh / 1000.0;
+
+    MarketPosition posn =
+        broker.getBroker().findMarketPositionByTimeslot(timeslot);
+    if (posn != null)
+      neededMWh -= posn.getOverallBalance();
+    log.debug("needed mWh=" + neededMWh +
+              ", timeslot " + timeslot);
+    if (Math.abs(neededMWh) <= minMWh) {
+      log.info("no power required in timeslot " + timeslot);
+      return;
+    }
+    Double limitPrice = computeLimitPrice(timeslot, neededMWh);
+    log.info("new order for " + neededMWh + " at " + limitPrice +
+             " in timeslot " + timeslot);
+    Order order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1-discount));
     lastOrder.put(timeslot, order);
     broker.sendMessage(order);
   }
