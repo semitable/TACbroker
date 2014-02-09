@@ -15,6 +15,7 @@
  */
 package org.powertac.samplebroker;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
@@ -97,7 +98,7 @@ implements MarketManager, Initializable, Activatable
   private double meanMarketPrice = 0.0;
 
   //private HashMap<Integer, ArrayList<MarketTransaction>> marketTxMap;
-  //private ArrayList<WeatherReport> weather;
+  private ArrayList<WeatherReport> weather;
 
   public MarketManagerService ()
   {
@@ -115,7 +116,7 @@ implements MarketManager, Initializable, Activatable
     lastOrder = new HashMap<Integer, Order>();
     propertiesService.configureMe(this);
     //marketTxMap = new HashMap<Integer, ArrayList<MarketTransaction>>();
-    //weather = new ArrayList<WeatherReport>();
+    weather = new ArrayList<WeatherReport>();
     for (Class<?> messageType: Arrays.asList(BalancingTransaction.class,
                                              ClearedTrade.class,
                                              DistributionTransaction.class,
@@ -240,6 +241,13 @@ implements MarketManager, Initializable, Activatable
    */
   public void handleMessage (WeatherReport report)
   {
+	  weather.add(report);
+  }
+  
+  //Return the list which contains all weather reports
+  public WeatherReport getWeatherReport(int timeslotIndex)
+  {
+	  return weather.get(timeslotIndex);
   }
 
   // ----------- per-timeslot activation ---------------
