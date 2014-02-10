@@ -335,8 +335,8 @@ implements MarketManager, Initializable, Activatable
     	}*/
     	double CustomerStorageCapacity = PFC.getTotalStorage(timeslot);
     	
-    	
-    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1+discount));
+    	//We always buy more energy. The extra energy is equal to the 40% of the storage
+    	order = new Order(broker.getBroker(), timeslot, neededMWh+(CustomerStorageCapacity*0.4), limitPrice*(1+discount));
     }
     lastOrder.put(timeslot, order);
     broker.sendMessage(order);
