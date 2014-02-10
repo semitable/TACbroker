@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 import org.powertac.common.BalancingTransaction;
 import org.powertac.common.ClearedTrade;
 import org.powertac.common.Competition;
+import org.powertac.common.CustomerInfo;
 import org.powertac.common.DistributionTransaction;
 import org.powertac.common.MarketPosition;
 import org.powertac.common.MarketTransaction;
@@ -35,6 +36,8 @@ import org.powertac.common.WeatherReport;
 import org.powertac.common.config.ConfigurableValue;
 import org.powertac.common.msg.MarketBootstrapData;
 import org.powertac.common.repo.TimeslotRepo;
+import org.powertac.common.repo.CustomerRepo;
+import org.powertac.samplebroker.PortfolioManagerService.CustomerRecord;
 import org.powertac.samplebroker.core.BrokerPropertiesService;
 import org.powertac.samplebroker.interfaces.Activatable;
 import org.powertac.samplebroker.interfaces.BrokerContext;
@@ -65,6 +68,8 @@ implements MarketManager, Initializable, Activatable
   
   @Autowired
   private PortfolioManager portfolioManager;
+  
+  private PortfolioManagerService PFC;
 
   // ------------ Configurable parameters --------------
   // max and min offer prices. Max means "sure to trade"
@@ -319,11 +324,18 @@ implements MarketManager, Initializable, Activatable
     log.info("new order for " + neededMWh + " at " + limitPrice +
              " in timeslot " + timeslot);
     Order order;
+    
     if (neededMWh>0){			//If we want to buy
     	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1-discount));
     }
     else						//if we want to sell
     {
+    	/*if (getWeatherReport(timeslot).getCloudCover()>0.5){ If it is cloudy
+    		
+    	}*/
+    	double CustomerStorageCapacity = PFC.getTotalStorage(timeslot);
+    	
+    	
     	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1+discount));
     }
     lastOrder.put(timeslot, order);

@@ -284,6 +284,16 @@ private void printTariffRepo(){
 	    }
 	    return result; 
   }
+  public double getTotalStorage(int index)
+  {
+	  double result = 0.0;
+	  for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	  	for (CustomerRecord record : customerMap.values()) {
+	    	result += record.getCustomerInfo().getStorageCapacity();
+	    }
+	  }
+	  return result;
+  }
   public double getEProduced(int index)
   {
 	    double result = 0.0;
