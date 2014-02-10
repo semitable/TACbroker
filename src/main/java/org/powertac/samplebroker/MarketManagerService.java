@@ -318,7 +318,14 @@ implements MarketManager, Initializable, Activatable
     Double limitPrice = computeLimitPrice(timeslot, neededMWh);
     log.info("new order for " + neededMWh + " at " + limitPrice +
              " in timeslot " + timeslot);
-    Order order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1-discount));
+    Order order;
+    if (neededMWh>0){			//If we want to buy
+    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1-discount));
+    }
+    else						//if we want to sell
+    {
+    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1+discount));
+    }
     lastOrder.put(timeslot, order);
     broker.sendMessage(order);
   }
