@@ -656,64 +656,51 @@ private void worsen(TariffSpecification spec)
     	else if (predImbaPrcge < -0.6)
     		;//Give balancing order with <0 expectage ?
 
-    	if(predImbaPrcge > 0.1){ //much more Energy consumed than produced. We need to buy
-    		for (TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())){
-    			if(spec.getPowerType().isProduction() && spec.isValid())
-    			{
-    				//Improve The production Tariff
-    				System.out.println("Trying to improve:");
-    				printTariff(spec);
-    				improve(spec);
-    				break;
-    			}
+   		for (PowerType pt : customerProfiles.keySet()){
+   			if(pt.isConsumption()) //we only care for production at this stage
+   				continue; 
+   			for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByPowerType(pt)){
+       			if(spec.getBroker().equals(brokerContext.getBroker()) )
+       			{
+       				//Improve The production Tariff
+       				if(predImbaPrcge >0.1){
+       					System.out.println("Trying to improve:");
+           				printTariff(spec);
+           				improve(spec);
+       				}else{
+       					System.out.println("Trying to worsen:");
+           				printTariff(spec);
+           				worsen(spec);
+       				}
+        		}
     		}
-    	}else if (predImbaPrcge < -0.1){ //much more energy produced than consumed, we need stop buying so much energy
-    		for (TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker())){
-    			if(spec.getPowerType().isProduction() && spec.isValid())
-    			{
-    				//worsen the production tariff
-    				System.out.println("Trying to worsen:");
-    				printTariff(spec);
-    				worsen(spec);
-    				break;
-    			}
-    		}
-    	}//else we are okay in imbalanced energy.
-    	
-    	
-    	
+
+    	}
+   		
     	//now check our subscribed customers
     	double customerPercentage = collectSubscribers()/getTotalCustomers();
+   		for (PowerType pt : customerProfiles.keySet()){
+   			if(pt.isProduction()) //we only care for consumption at this stage
+   				continue; 
+   			for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByPowerType(pt)){
+       			if(spec.getBroker().equals(brokerContext.getBroker()) ) //Only improve our tariffs ofc :-)
+       			{
+       				//Improve The consumption Tariff to get more customers
+       				if(customerPercentage < 0.33){
+       					System.out.println("Trying to improve:");
+           				printTariff(spec);
+           				improve(spec);
+       				}else{
+       					System.out.println("Trying to worsen:");
+           				printTariff(spec);
+           				worsen(spec);
+       				}
+        		}
+    		}
 
-    	if(customerPercentage < 0.33) //TODO: better change this to customerPercentage < 1/numberofBrokers?
-    	{
-    		//We need to improve consumer prices;
-    		for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker()))
-    		{
-    			if(spec.getPowerType().isConsumption() && spec.isValid())
-    			{
-    				//Improve tariff
-    				System.out.println("Trying to improve:");
-    				printTariff(spec);
-    				improve(spec);
-    				break;
-    			}
-    		}
-    	}else{
-    		for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByBroker(brokerContext.getBroker()))
-    		{
-    			if(spec.getPowerType().isConsumption() && spec.isValid())
-    			{
-    				//Worsen Tariff
-    				System.out.println("Trying to worsen:");
-    				printTariff(spec);
-    				worsen(spec);
-    				break;
-    			}
-    		}
-    		
-    		
     	}
+
+
     	
     	
     	
