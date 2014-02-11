@@ -25,5 +25,7 @@ public interface PortfolioManager
    * Returns total net expected usage across all subscriptions for the given
    * index (normally a timeslot serial number).
    */
-  public double collectUsage (int index); 
+  public double collectUsage (int index);
+
+public double getTotalStorage(int timeslot); 
 }

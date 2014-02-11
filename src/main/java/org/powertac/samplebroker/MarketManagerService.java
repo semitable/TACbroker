@@ -68,8 +68,6 @@ implements MarketManager, Initializable, Activatable
   
   @Autowired
   private PortfolioManager portfolioManager;
-  
-  private PortfolioManagerService PFC;
 
   // ------------ Configurable parameters --------------
   // max and min offer prices. Max means "sure to trade"
@@ -271,13 +269,15 @@ implements MarketManager, Initializable, Activatable
     for (Timeslot timeslot : timeslotRepo.enabledTimeslots()) {
       int index = (timeslot.getSerialNumber()) % broker.getUsageRecordLength();
       neededKWh = portfolioManager.collectUsage(index);
-	  if (timeslotRepo.currentTimeslot().getSerialNumber()==timeslotIndex){	//for the current time slot
-		  submitOrder(neededKWh, timeslot.getSerialNumber());
-	  }
-	  else{	//for future -not so urgent order
-		  int future_slot = timeslotRepo.currentTimeslot().getSerialNumber() - timeslot.getSerialNumber();
-		  submitOrder2(neededKWh, timeslot.getSerialNumber(),(1+future_slot)/24);    // #XRIZEI ANATHEORISI#
-	  }
+      for (int i=0;i<24;i++){
+    	  if (timeslotRepo.currentTimeslot().getSerialNumber()==timeslotIndex+i){	//for the current time slot
+    		  submitOrder(neededKWh, timeslot.getSerialNumber());
+    	  }
+    	  else{	//for future -not so urgent order
+    		  int future_slot = timeslotRepo.currentTimeslot().getSerialNumber() - timeslot.getSerialNumber();
+    		  submitOrder2(neededKWh, timeslot.getSerialNumber(),(1+future_slot)/24);    // #XRIZEI ANATHEORISI#
+    	  }
+      }
     }
   }
 
@@ -330,12 +330,12 @@ implements MarketManager, Initializable, Activatable
     }
     else						//if we want to sell
     {
-    	/*if (getWeatherReport(timeslot).getCloudCover()>0.5){ If it is cloudy
-    		
-    	}*/
-    	double CustomerStorageCapacity = PFC.getTotalStorage(timeslot);
+    	double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);	
+    	//We always buy more energy 23 slots ahead. The extra energy is equal to the 40% of the storage
+    	if (timeslotRepo.currentTimeslot().getSerialNumber()!= timeslot+23){
+    		CustomerStorageCapacity=0;
+    	}
     	
-    	//We always buy more energy. The extra energy is equal to the 40% of the storage
     	order = new Order(broker.getBroker(), timeslot, neededMWh+(CustomerStorageCapacity*0.4), limitPrice*(1+discount));
     }
     lastOrder.put(timeslot, order);
