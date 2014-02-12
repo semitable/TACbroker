@@ -284,7 +284,7 @@ private void printTariffRepo(){
 	    int result = 0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if (record.customer == null){ System.out.println("Null Customer Record"); continue; }
+	    	  if (record.customer == null){ /*System.out.println("Null Customer Record"); */ continue; } //TODO: many null customer records.. Must check
 	    	  if (pt == null || record.customer.getPowerType().equals(pt))
 	    		  result += record.subscribedPopulation; //Sum up all the subscribers
 	      }
@@ -756,11 +756,16 @@ private TariffSpecification worsen(TariffSpecification spec)
    			for(TariffSpecification spec: getOwnTariffs(pt)){
        				//Improve The consumption Tariff to get more customers
        				if(customerPercentage < 0.33){
-       					System.out.println("(C)Trying to improve:");
+       					System.out.println("(C)Trying to surpass:");
            				printTariff(spec);
-           				TariffSpecification newspec = improve(spec);
+           				//TariffSpecification newspec = improve(spec);
+           				TariffSpecification newspec = surpass(spec);
            				supersede(spec, newspec);
-       				}else{
+       				}else if (customerPercentage < 0.70){
+       					System.out.println("(C)Trying to improve:");
+       					printTariff(spec);
+       					TariffSpecification newspec = improve(spec);
+       					supersede(spec, newspec);
        					//Let's not worsen our tariffs at this stage..
        					//System.out.println("Trying to worsen:");
            				//printTariff(spec);
