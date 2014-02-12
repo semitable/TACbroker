@@ -584,7 +584,7 @@ public int getTotalCustomers()
 	  
 	  PowerType pt = spec.getPowerType();
 	  double own = evaluateTariff(spec), best = 0.0;
-	  for (TariffSpecification compSpec : competingTariffs.get(pt)){
+	  for (TariffSpecification compSpec : getCompetingTariffs(pt)){
 		  best = Math.max(evaluateTariff(compSpec), best);
 	  }
 	  if(own > best) { return null; } //no need to improve anything
