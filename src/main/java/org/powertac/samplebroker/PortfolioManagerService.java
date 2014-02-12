@@ -507,13 +507,17 @@ public int getTotalCustomers()
   }
   
   private double evaluateTariff(TariffSpecification spec){ //Simulated Cost for a week for customer //TODO:Might Need improvement!
-
+	  //We usually want to minimize evaluateTariff() when we want to improve a tariff. For this reason:
+	  //Production will be negative and consumption positive
 	  double result = 0.0;
 	  PowerType pt = spec.getPowerType();
 	  int n = 0;
 	  for (CustomerRecord c : customerProfiles.get(pt).values()){
 		  result += evaluateTariff(c, spec); n++;
 	  }
+	  if(spec.getPowerType().isProduction())
+		  result = -result;
+	  printTariff(spec);
 	  System.out.println("TariffEvaluated at: " + result/n);
 	  return result/n;
 	  
@@ -587,11 +591,11 @@ public int getTotalCustomers()
 	  if (spec == null) { System.out.println("Trying to improve NULL tariff."); return null;}
 	  
 	  PowerType pt = spec.getPowerType();
-	  double own = evaluateTariff(spec), best = 0.0;
+	  double own = evaluateTariff(spec), best = own;
 	  for (TariffSpecification compSpec : getCompetingTariffs(pt)){
-		  best = Math.max(evaluateTariff(compSpec), best);
+		  best = Math.min(evaluateTariff(compSpec), best);
 	  }
-	  if(own > best) { return null; } //no need to improve anything
+	  if(own < best) { return null; } //no need to improve anything
 
 	  TariffSpecification newspec =null;
 	  do {
@@ -603,7 +607,7 @@ public int getTotalCustomers()
 			  newspec = improve(newspec);
 		  own = evaluateTariff(newspec);
 		  
-	  }while (best > own);
+	  }while (best < own);
 	  
 	  return newspec;
 	  
@@ -618,7 +622,7 @@ public int getTotalCustomers()
 	  double best = eval;
 	  for (TariffSpecification comp : competition)
 	  {
-		  best = Math.max(evaluateTariff(comp), best);
+		  best = Math.min(evaluateTariff(comp), best);
 		  
 	  }
 	  if (eval == best)
