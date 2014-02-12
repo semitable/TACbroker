@@ -502,7 +502,7 @@ public int getTotalCustomers()
 	  tf.init();
 	  
 	  double result = help.estimateCost(tf, c.usage.clone());
-	  return result;
+	  return Math.abs(result);
 	  
   }
   
