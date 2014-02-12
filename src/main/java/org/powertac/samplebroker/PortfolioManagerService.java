@@ -514,6 +514,7 @@ public int getTotalCustomers()
 	  for (CustomerRecord c : customerProfiles.get(pt).values()){
 		  result += evaluateTariff(c, spec); n++;
 	  }
+	  System.out.println("TariffEvaluated at: " + result/n);
 	  return result/n;
 	  
   }
