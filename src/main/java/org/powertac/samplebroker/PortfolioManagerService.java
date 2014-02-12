@@ -284,7 +284,8 @@ private void printTariffRepo(){
 	    int result = 0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if (record.customer.getPowerType() == pt || pt == null)
+	    	  if (record.customer == null){ System.out.println("Null Customer Record"); continue; }
+	    	  if (pt == null || record.customer.getPowerType().equals(pt))
 	    		  result += record.subscribedPopulation; //Sum up all the subscribers
 	      }
 	    }
@@ -769,11 +770,6 @@ private TariffSpecification worsen(TariffSpecification spec)
     		}
 
     	}
-
-
-    	
-    	
-    	
     }
     
     
