@@ -114,6 +114,16 @@ implements PortfolioManager, Initializable, Activatable
   @ConfigurableValue(valueType = "Double",
           description = "Default daily meter charge")
   private double defaultPeriodicPayment = -1.0;
+  
+  @ConfigurableValue(valueType = "Double",
+          description = "Subscription Payment")
+  private double defaultSubscriptionPayment = -7.0;
+  
+  @ConfigurableValue(valueType = "Double",
+          description = "Default Early withdrawal penalty")
+  private double defaultEarlyWithdraw = -4.0;
+  
+  
 
   /**
    * Default constructor registers for messages, must be called after 
@@ -571,6 +581,8 @@ public int getTotalCustomers(PowerType pt)
       TariffSpecification spec =
           new TariffSpecification(brokerContext.getBroker(), pt)
               .withPeriodicPayment(defaultPeriodicPayment);
+      spec.withSignupPayment(defaultSubscriptionPayment);
+      spec.withEarlyWithdrawPayment(defaultEarlyWithdraw);
       Rate rate = new Rate().withValue(rateValue);
       if (pt.isInterruptible()) {
         // set max curtailment
@@ -654,7 +666,9 @@ public int getTotalCustomers(PowerType pt)
 		  return spec; //no improvement needed//?we might want to worsen()?
 	  
 	  
-	  double rateValue, periodic;
+	  double rateValue, periodic, subscription, withdraw;
+	  subscription = spec.getSignupPayment();
+	  withdraw = spec.getEarlyWithdrawPayment();
 	  if(spec.getPowerType().isConsumption()){
 	      rateValue = spec.getRates().get(0).getValue() *0.95;
 	      periodic = spec.getPeriodicPayment()*0.9;
@@ -668,6 +682,8 @@ public int getTotalCustomers(PowerType pt)
       TariffSpecification newspec =
               new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
                   .withPeriodicPayment(periodic);
+      newspec.withSignupPayment(subscription);
+      newspec.withEarlyWithdrawPayment(withdraw);
       Rate rate = new Rate().withValue(rateValue);
       newspec.addRate(rate);
       
@@ -676,8 +692,10 @@ public int getTotalCustomers(PowerType pt)
   }
 private TariffSpecification worsen(TariffSpecification spec)
 {
-  
-	  double rateValue, periodic;
+
+	  double rateValue, periodic, subscription, withdraw;
+	  subscription = spec.getSignupPayment();
+	  withdraw = spec.getEarlyWithdrawPayment();
 	  if(spec.getPowerType().isConsumption()){
 	      rateValue = spec.getRates().get(0).getValue() *1.1;
 	      periodic = spec.getPeriodicPayment()*1.1;
@@ -689,6 +707,8 @@ private TariffSpecification worsen(TariffSpecification spec)
     TariffSpecification newspec =
             new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
                 .withPeriodicPayment(periodic);
+    newspec.withSignupPayment(subscription);
+    newspec.withEarlyWithdrawPayment(withdraw);
     Rate rate = new Rate().withValue(rateValue);
     newspec.addRate(rate);
     
