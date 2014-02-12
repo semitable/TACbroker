@@ -139,6 +139,7 @@ implements PortfolioManager, Initializable, Activatable
     customerSubscriptions = new HashMap<TariffSpecification,
         HashMap<CustomerInfo, CustomerRecord>>();
     competingTariffs = new HashMap<PowerType, List<TariffSpecification>>();
+    ourTariffs = new HashMap<PowerType, List<TariffSpecification>>();
     for (Class<?> messageType: Arrays.asList(CustomerBootstrapData.class,
                                              TariffSpecification.class,
                                              TariffStatus.class,
