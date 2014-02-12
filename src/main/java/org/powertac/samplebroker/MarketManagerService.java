@@ -18,6 +18,7 @@ package org.powertac.samplebroker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
@@ -30,6 +31,7 @@ import org.powertac.common.MarketPosition;
 import org.powertac.common.MarketTransaction;
 import org.powertac.common.Order;
 import org.powertac.common.Orderbook;
+import org.powertac.common.OrderbookOrder;
 import org.powertac.common.Timeslot;
 import org.powertac.common.WeatherForecast;
 import org.powertac.common.WeatherReport;
@@ -102,6 +104,7 @@ implements MarketManager, Initializable, Activatable
 
   //private HashMap<Integer, ArrayList<MarketTransaction>> marketTxMap;
   private ArrayList<WeatherReport> weather;
+  private ArrayList<Orderbook> OrderBook;
 
   public MarketManagerService ()
   {
@@ -220,8 +223,9 @@ implements MarketManager, Initializable, Activatable
     Order lastTry = lastOrder.get(tx.getTimeslotIndex());
     if (lastTry == null) // should not happen
       log.error("order corresponding to market tx " + tx + " is null");
-    else if (tx.getMWh() == lastTry.getMWh()) // fully cleared
-      lastOrder.put(tx.getTimeslotIndex(), null);
+    else if (tx.getMWh() == lastTry.getMWh()){ // fully cleared
+    	lastOrder.put(tx.getTimeslotIndex(), null);
+    }
   }
   
   /**
@@ -229,7 +233,13 @@ implements MarketManager, Initializable, Activatable
    */
   public void handleMessage (Orderbook orderbook)
   {
-    // implement something here.
+	  OrderBook.add(orderbook);
+  }
+  
+  //Return the list which contains orderbook
+  public Orderbook getOrderBook(int timeslotIndex)
+  {
+	  return OrderBook.get(timeslotIndex);
   }
   
   /**
@@ -269,15 +279,7 @@ implements MarketManager, Initializable, Activatable
     for (Timeslot timeslot : timeslotRepo.enabledTimeslots()) {
       int index = (timeslot.getSerialNumber()) % broker.getUsageRecordLength();
       neededKWh = portfolioManager.collectUsage(index);
-     // for (int i=0;i<24;i++){
-    //	  if (timeslotRepo.currentTimeslot().getSerialNumber()==timeslotIndex+i){	//for the current time slot
-    		  submitOrder(neededKWh, timeslot.getSerialNumber());
-    //	  }
-    //	  else{	//for future -not so urgent order
-    //		  int future_slot = timeslotRepo.currentTimeslot().getSerialNumber() - timeslot.getSerialNumber();
-    //		  submitOrder2(neededKWh, timeslot.getSerialNumber(),(1+future_slot)/24);    // #XRIZEI ANATHEORISI#
-    	//  }
-    //  }
+      submitOrder2(neededKWh, timeslot.getSerialNumber());
     }
   }
 
@@ -306,7 +308,7 @@ implements MarketManager, Initializable, Activatable
     broker.sendMessage(order);
   }
   
-  private void submitOrder2 (double neededKWh, int timeslot, float discount)
+  private void submitOrder2 (double neededKWh, int timeslot)
   {
     double neededMWh = neededKWh / 1000.0;
 
@@ -323,21 +325,39 @@ implements MarketManager, Initializable, Activatable
     Double limitPrice = computeLimitPrice(timeslot, neededMWh);
     log.info("new order for " + neededMWh + " at " + limitPrice +
              " in timeslot " + timeslot);
-    Order order;
     
-    if (neededMWh>0){			//If we want to buy
-    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1-discount));
+    
+    Order order;
+System.out.println("Current TimeSlot:"+timeslotRepo.currentSerialNumber());
+System.out.println("Order for TimeSlot:"+timeslot);
+double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
+neededMWh=+CustomerStorageCapacity*0.4;
+System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
+    if (timeslotRepo.currentSerialNumber()==timeslot){
+    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
+    	System.out.println("Buying for the current timeslot");
     }
-    else						//if we want to sell
-    {
-    	double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);	
-    	//We always buy more energy 23 slots ahead. The extra energy is equal to the 40% of the storage
-    	if (timeslotRepo.currentTimeslot().getSerialNumber()!= timeslot+23){
-    		CustomerStorageCapacity=0;
-    	}
-    	
-    	order = new Order(broker.getBroker(), timeslot, neededMWh+(CustomerStorageCapacity*0.4), limitPrice*(1+discount));
+    else{
+    	System.out.println("Buying for future timeslot");
+    	 	if (neededMWh>0){			//If we want to buy
+    	    	//order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice*(1-discount));
+	    		order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
+	 	    	System.out.println("Buy Energy");
+	    	}
+    	    else						//if we want to sell
+    	    {
+    	    	System.out.println("Sell Energy");
+    	    	CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);	
+    	    	//We always buy more energy 23 slots ahead. The extra energy is equal to the 40% of the storage
+    	    	if (timeslotRepo.currentTimeslot().getSerialNumber()!= timeslot+23){
+    	    		CustomerStorageCapacity=0;
+    	    	}
+    	    	
+    	    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
+    	    }
     }
+    
+   
     lastOrder.put(timeslot, order);
     broker.sendMessage(order);
   }

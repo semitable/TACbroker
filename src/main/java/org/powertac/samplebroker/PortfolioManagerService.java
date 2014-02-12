@@ -313,8 +313,10 @@ private void printTariffRepo(){
 	    	//result += record.getCustomerInfo().getStorageCapacity();
 	    }
 	  }
-	  return result;
+	  //return result;
+	  return 15;
   }
+  
   public double getEProduced(int index)
   {
 	    double result = 0.0;
@@ -873,6 +875,7 @@ private TariffSpecification worsen(TariffSpecification spec)
     CustomerInfo customer;
     int subscribedPopulation = 0;
     double[] usage;
+    double[] storage;
     double alpha = 0.3;
     
     

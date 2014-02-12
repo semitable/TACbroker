@@ -27,5 +27,5 @@ public interface PortfolioManager
    */
   public double collectUsage (int index);
 
-public double getTotalStorage(int timeslot); 
+public double getTotalStorage(int index); 
 }
