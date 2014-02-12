@@ -601,7 +601,7 @@ public int getTotalCustomers()
 			  newspec = improve(spec);
 		  else
 			  newspec = improve(newspec);
-		  own = evaluateTariff(spec);
+		  own = evaluateTariff(newspec);
 		  
 	  }while (best > own);
 	  
