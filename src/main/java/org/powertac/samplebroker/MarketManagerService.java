@@ -269,15 +269,15 @@ implements MarketManager, Initializable, Activatable
     for (Timeslot timeslot : timeslotRepo.enabledTimeslots()) {
       int index = (timeslot.getSerialNumber()) % broker.getUsageRecordLength();
       neededKWh = portfolioManager.collectUsage(index);
-      for (int i=0;i<24;i++){
-    	  if (timeslotRepo.currentTimeslot().getSerialNumber()==timeslotIndex+i){	//for the current time slot
+     // for (int i=0;i<24;i++){
+    //	  if (timeslotRepo.currentTimeslot().getSerialNumber()==timeslotIndex+i){	//for the current time slot
     		  submitOrder(neededKWh, timeslot.getSerialNumber());
-    	  }
-    	  else{	//for future -not so urgent order
-    		  int future_slot = timeslotRepo.currentTimeslot().getSerialNumber() - timeslot.getSerialNumber();
-    		  submitOrder2(neededKWh, timeslot.getSerialNumber(),(1+future_slot)/24);    // #XRIZEI ANATHEORISI#
-    	  }
-      }
+    //	  }
+    //	  else{	//for future -not so urgent order
+    //		  int future_slot = timeslotRepo.currentTimeslot().getSerialNumber() - timeslot.getSerialNumber();
+    //		  submitOrder2(neededKWh, timeslot.getSerialNumber(),(1+future_slot)/24);    // #XRIZEI ANATHEORISI#
+    	//  }
+    //  }
     }
   }
 

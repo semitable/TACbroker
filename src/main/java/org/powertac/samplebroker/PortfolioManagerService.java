@@ -289,7 +289,7 @@ private void printTariffRepo(){
 	  double result = 0.0;
 	  for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	  	for (CustomerRecord record : customerMap.values()) {
-	    	result += record.getCustomerInfo().getStorageCapacity();
+	    	//result += record.getCustomerInfo().getStorageCapacity();
 	    }
 	  }
 	  return result;
@@ -508,14 +508,12 @@ public int getTotalCustomers()
   
   private double evaluateTariff(TariffSpecification spec){ //Simulated Cost for a week for customer //TODO:Might Need improvement!
 
-	  double result = 0;
-	  if(customerSubscriptions.get(spec) == null)
-		  return 0;
-	  int n = customerSubscriptions.get(spec).size();
-	  if(n == 0){
-		  System.out.println("Failed at evaluating Tariff"); return 0;}
-	  for (CustomerRecord c : customerSubscriptions.get(spec).values())
-		  result += evaluateTariff(c, spec);
+	  double result = 0.0;
+	  PowerType pt = spec.getPowerType();
+	  int n = 0;
+	  for (CustomerRecord c : customerProfiles.get(pt).values()){
+		  result += evaluateTariff(c, spec); n++;
+	  }
 	  return result/n;
 	  
   }
@@ -553,16 +551,65 @@ public int getTotalCustomers()
       }
       spec.addRate(rate);
       customerSubscriptions.put(spec, new HashMap<CustomerInfo, CustomerRecord>());
-      tariffRepo.addSpecification(spec);
-      brokerContext.sendMessage(spec);
+      TariffSpecification newspec = surpass(spec);
+      publish(newspec);
     }
   }
   
-  private void improve(TariffSpecification spec)
+  private void publish(TariffSpecification newspec)
+  {
+	  tariffRepo.addSpecification(newspec);
+      brokerContext.sendMessage(newspec);
+  }
+  private void revoke(TariffSpecification oldspec)
+  {
+      TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), oldspec);
+      brokerContext.sendMessage(revoke);
+  }
+  
+  private void supersede(TariffSpecification oldspec, TariffSpecification newspec)
+  {
+	  if (newspec == null) { return; } //nothing to do
+	  if (oldspec == null){ publish(newspec); return; } //only publish
+	  
+      newspec.addSupersedes(oldspec.getId()); //So we supersede the old tariff
+      publish(newspec); //publish the new one
+      revoke(oldspec); // and then revoke the old one
+
+  }
+  
+  private TariffSpecification surpass(TariffSpecification spec) //we will supersed spec with a tariff better than every competitor's tariff
+  {
+	  if (spec == null) { System.out.println("Trying to improve NULL tariff."); return null;}
+	  
+	  PowerType pt = spec.getPowerType();
+	  double own = evaluateTariff(spec), best = 0.0;
+	  for (TariffSpecification compSpec : competingTariffs.get(pt)){
+		  best = Math.max(evaluateTariff(compSpec), best);
+	  }
+	  if(own > best) { return null; } //no need to improve anything
+
+	  TariffSpecification newspec =null;
+	  do {
+		  //improve rate
+		  //We improve tariffs by 10% until ours is the best
+		  if(newspec == null)
+			  newspec = improve(spec);
+		  else
+			  newspec = improve(newspec);
+		  own = evaluateTariff(spec);
+		  
+	  }while (best > own);
+	  
+	  return newspec;
+	  
+  }
+  
+  private TariffSpecification improve(TariffSpecification spec)
   {
 	  List<TariffSpecification >competition = competingTariffs.get(spec.getPowerType());
 	  if (competition == null)
-		  return; //no competition //?we might want to worsen()?
+		  return null; //no competition //?we might want to worsen()?
 	  double eval = evaluateTariff(spec);
 	  double best = eval;
 	  for (TariffSpecification comp : competition)
@@ -571,7 +618,7 @@ public int getTotalCustomers()
 		  
 	  }
 	  if (eval == best)
-		  return; //no improvement needed//?we might want to worsen()?
+		  return null; //no improvement needed//?we might want to worsen()?
 	  
 	  
 	  double rateValue, periodic;
@@ -591,15 +638,10 @@ public int getTotalCustomers()
       Rate rate = new Rate().withValue(rateValue);
       newspec.addRate(rate);
       
-      
-      newspec.addSupersedes(spec.getId()); //So we supersede the old tariff
-      tariffRepo.addSpecification(newspec);
-      brokerContext.sendMessage(newspec);
-      // and then revoke the old one
-      TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), spec);
-      brokerContext.sendMessage(revoke);
+      return newspec;
+
   }
-private void worsen(TariffSpecification spec)
+private TariffSpecification worsen(TariffSpecification spec)
 {
   
 	  double rateValue, periodic;
@@ -617,13 +659,7 @@ private void worsen(TariffSpecification spec)
     Rate rate = new Rate().withValue(rateValue);
     newspec.addRate(rate);
     
-    
-    newspec.addSupersedes(spec.getId()); //So we supersede the old tariff
-    tariffRepo.addSpecification(newspec);
-    brokerContext.sendMessage(newspec);
-    // and then revoke the old one
-    TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), spec);
-    brokerContext.sendMessage(revoke);
+    return newspec;
 	
 	
 }
@@ -666,11 +702,13 @@ private void worsen(TariffSpecification spec)
        				if(predImbaPrcge >0.1){
        					System.out.println("Trying to improve:");
            				printTariff(spec);
-           				improve(spec);
+           				TariffSpecification newspec = improve(spec);
+           				supersede(spec, newspec);
        				}else{
        					System.out.println("Trying to worsen:");
            				printTariff(spec);
-           				worsen(spec);
+           				TariffSpecification newspec = worsen(spec);
+           				supersede(spec, newspec);
        				}
         		}
     		}
@@ -689,11 +727,13 @@ private void worsen(TariffSpecification spec)
        				if(customerPercentage < 0.33){
        					System.out.println("Trying to improve:");
            				printTariff(spec);
-           				improve(spec);
+           				TariffSpecification newspec = improve(spec);
+           				supersede(spec, newspec);
        				}else{
        					System.out.println("Trying to worsen:");
            				printTariff(spec);
-           				worsen(spec);
+           				TariffSpecification newspec = worsen(spec);
+           				supersede(spec, newspec);
        				}
         		}
     		}
