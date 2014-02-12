@@ -551,26 +551,29 @@ public int getTotalCustomers()
         rate.withMaxCurtailment(0.1);
       }
       spec.addRate(rate);
-      customerSubscriptions.put(spec, new HashMap<CustomerInfo, CustomerRecord>());
+      
       TariffSpecification newspec = surpass(spec);
+      customerSubscriptions.put(newspec, new HashMap<CustomerInfo, CustomerRecord>());
       publish(newspec);
     }
   }
   
   private void publish(TariffSpecification newspec)
   {
+	  if(newspec == null) { System.out.println("Trying to publish null tariff");return; }
 	  tariffRepo.addSpecification(newspec);
       brokerContext.sendMessage(newspec);
   }
   private void revoke(TariffSpecification oldspec)
   {
+	  if(oldspec == null) { System.out.println("Trying to revoke null tariff");return; }
       TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), oldspec);
       brokerContext.sendMessage(revoke);
   }
   
   private void supersede(TariffSpecification oldspec, TariffSpecification newspec)
   {
-	  if (newspec == null) { return; } //nothing to do
+	  if (newspec == null) { System.out.println("Trying to supersede with null tariff"); return; } //nothing to do
 	  if (oldspec == null){ publish(newspec); return; } //only publish
 	  
       newspec.addSupersedes(oldspec.getId()); //So we supersede the old tariff
@@ -610,7 +613,7 @@ public int getTotalCustomers()
   {
 	  List<TariffSpecification >competition = competingTariffs.get(spec.getPowerType());
 	  if (competition == null)
-		  return null; //no competition //?we might want to worsen()?
+		  return spec; //no competition //?we might want to worsen()?
 	  double eval = evaluateTariff(spec);
 	  double best = eval;
 	  for (TariffSpecification comp : competition)
@@ -619,7 +622,7 @@ public int getTotalCustomers()
 		  
 	  }
 	  if (eval == best)
-		  return null; //no improvement needed//?we might want to worsen()?
+		  return spec; //no improvement needed//?we might want to worsen()?
 	  
 	  
 	  double rateValue, periodic;
