@@ -157,6 +157,7 @@ private void printTariffRepo(){
 	}
 	private void printTariff(TariffSpecification spec){
 		System.out.println("--Tariff Spec--");
+		System.out.println("ID: " + spec.getId());
 		System.out.println("Offered By: " + spec.getBroker());
 		System.out.println("Rate: " + spec.getRates());
 		System.out.println("PowerType: " + spec.getPowerType());
@@ -517,7 +518,7 @@ public int getTotalCustomers()
 	  }
 	  if(spec.getPowerType().isProduction())
 		  result = -result;
-	  printTariff(spec);
+
 	  System.out.println("Tariff " + spec.getId() + " evaluated at: " + result/n);
 	  return result/n;
 	  
@@ -718,6 +719,7 @@ private TariffSpecification worsen(TariffSpecification spec)
            				TariffSpecification newspec = worsen(spec);
            				supersede(spec, newspec);
        				}
+       				break; //ASSUMING WE ONLY GOT 1 TARIFF FOR EACH POWER TYPE
         		}
     		}
 
@@ -744,6 +746,7 @@ private TariffSpecification worsen(TariffSpecification spec)
            				//TariffSpecification newspec = worsen(spec);
            				//supersede(spec, newspec);
        				}
+       				break; //ASSUMING WE ONLY GOT 1 TARIFF FOR EACH POWER TYPE
         		}
     		}
 
