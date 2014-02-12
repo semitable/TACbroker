@@ -878,6 +878,8 @@ private TariffSpecification worsen(TariffSpecification spec)
     CustomerInfo customer;
     int subscribedPopulation = 0;
     double[] usage;
+//TODO:make a Hashmap in the form of <Customer, ArrayList[][]>
+  //  ArrayList[][] customerHistory; 
     double alpha = 0.3;
     
     
@@ -889,6 +891,13 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = customer;
       this.usage = new double[brokerContext.getUsageRecordLength()];
+    //  this.customerHistory=new ArrayList[24][7];
+      
+    //  for (ArrayList[] i : customerHistory){
+//	for (ArrayList cell : i){
+//	  cell=new ArrayList<CustomerHistoryDetails>();
+//	}
+  //    }
     }
     
     CustomerRecord (CustomerRecord oldRecord)
@@ -896,6 +905,14 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = oldRecord.customer;
       this.usage = Arrays.copyOf(oldRecord.usage, brokerContext.getUsageRecordLength());
+  //    this.customerHistory=new ArrayList[24][7];
+      
+    //  for (ArrayList[] i : customerHistory){
+//	for (ArrayList cell : i){
+//	  cell=new ArrayList<CustomerHistoryDetails>();
+//	}
+  //    }
+ 
     }
     
     // Returns the CustomerInfo for this record
@@ -967,6 +984,35 @@ private TariffSpecification worsen(TariffSpecification spec)
       return rawIndex % usage.length;
     }
 
+    /*
+    *function to populate customerHistory
+    */
+    void populateCustomerHistory(int rawIndex, double kwh, WeatherReport weather)
+    {
+	customerHistory[rawIndex%24][rawIndex/24].add(new CustomerHistoryDetails(kwh, weather));
+    }  
+}
+
+
+  //TODO:maybe weather is no needed!! (If so, this class is useless. In that case just replace this class with kwh)
+  /**
+  *CustomerHistoryDetails class
+  *per customer model per timeslot
+  * detailed consumption/production history
+  *and weather report.
+  *
+  *used for prediction
+  */
+  class CustomerHistoryDetails
+  {
+	double kwh;
+	WeatherReport weather;
+	
+        CustomerHistoryDetails(double kwh,WheatherReport weather)
+	{
+		this.kwh=kwh;
+		this.weather=weather;
+	}
+
   }
 
-}
