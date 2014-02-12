@@ -121,7 +121,7 @@ implements PortfolioManager, Initializable, Activatable
   
   @ConfigurableValue(valueType = "Double",
           description = "Default Early withdrawal penalty")
-  private double defaultEarlyWithdraw = -9.0;
+  private double defaultEarlyWithdraw = -25.0;
   @ConfigurableValue(valueType = "Long",
           description = "Default Minimum Duration")
   private long defaultMinDuration = 600;
@@ -676,10 +676,9 @@ public int getTotalCustomers(PowerType pt)
 	  withdraw = spec.getEarlyWithdrawPayment();
 	  minDur = spec.getMinDuration();
 	  if(spec.getPowerType().isConsumption()){
-	      rateValue = spec.getRates().get(0).getValue() *0.95;
+	      rateValue = spec.getRates().get(0).getValue() *0.8;
 	      periodic = spec.getPeriodicPayment()*0.9;
-	      }
-	  else{ //is production
+	  }else{ //is production
 	      rateValue = spec.getRates().get(0).getValue() *1.1;
 	      periodic = spec.getPeriodicPayment()*0.9;
 	  }
@@ -979,7 +978,7 @@ private TariffSpecification worsen(TariffSpecification spec)
         log.warn("usage requested for negative index " + index);
         index = 0;
       }
-      System.out.println("Usage: " + usage[getIndex(index)] + "Subs: " + subscribedPopulation);
+      //System.out.println("Usage: " + usage[getIndex(index)] + "Subs: " + subscribedPopulation);
       //System.out.println(" Usage: " + usage[getIndex(index)] + "subscribed population: " + subscribedPopulation);
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
