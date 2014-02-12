@@ -578,6 +578,7 @@ public int getTotalCustomers()
   
   private void supersede(TariffSpecification oldspec, TariffSpecification newspec)
   {
+	  if (newspec == oldspec) { return; } //probably improve() returned the initial tariff so we don't need to publish
 	  if (newspec == null) { System.out.println("Trying to supersede with null tariff"); return; } //nothing to do
 	  if (oldspec == null){ publish(newspec); return; } //only publish
 	  
@@ -709,12 +710,12 @@ private TariffSpecification worsen(TariffSpecification spec)
        			{
        				//Improve The production Tariff
        				if(predImbaPrcge >0.1){
-       					System.out.println("Trying to improve:");
+       					System.out.println("(E)Trying to improve:");
            				printTariff(spec);
            				TariffSpecification newspec = improve(spec);
            				supersede(spec, newspec);
        				}else{
-       					System.out.println("Trying to worsen:");
+       					System.out.println("(E)Trying to worsen:");
            				printTariff(spec);
            				TariffSpecification newspec = worsen(spec);
            				supersede(spec, newspec);
@@ -735,7 +736,7 @@ private TariffSpecification worsen(TariffSpecification spec)
        			{
        				//Improve The consumption Tariff to get more customers
        				if(customerPercentage < 0.33){
-       					System.out.println("Trying to improve:");
+       					System.out.println("(S)Trying to improve:");
            				printTariff(spec);
            				TariffSpecification newspec = improve(spec);
            				supersede(spec, newspec);
