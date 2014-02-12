@@ -99,6 +99,7 @@ implements PortfolioManager, Initializable, Activatable
                   HashMap<CustomerInfo, CustomerRecord>> customerSubscriptions;
   private HashMap<PowerType, List<TariffSpecification>> competingTariffs;
 
+  private HashMap<PowerType, List<TariffSpecification>> ourTariffs;
   // Configurable parameters for tariff composition
   // Override defaults in src/main/resources/config/broker.config
   // or in top-level config file
@@ -238,6 +239,16 @@ private void printTariffRepo(){
     }
     return result;
   }
+  //get our tariff from the hashmap
+  List<TariffSpecification> getOwnTariffs (PowerType powerType)
+  {
+    List<TariffSpecification> result = ourTariffs.get(powerType);
+    if (result == null) {
+      result = new ArrayList<TariffSpecification>();
+      ourTariffs.put(powerType, result);
+    }
+    return result;
+  }
 
   /**
    * Adds a new competing tariff to the list.
@@ -245,6 +256,11 @@ private void printTariffRepo(){
   private void addCompetingTariff (TariffSpecification spec)
   {
     getCompetingTariffs(spec.getPowerType()).add(spec);
+  } 
+  //Add our tariff to our list
+  private void addOwnTariff (TariffSpecification spec)
+  {
+	    getOwnTariffs(spec.getPowerType()).add(spec);
   }
 
   /**
@@ -261,16 +277,18 @@ private void printTariffRepo(){
     }
     return -result; // convert to needed energy account balance
   }
-  public int collectSubscribers ()
+
+  public int collectSubscribers (PowerType pt)
   {
 	    int result = 0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	        result += record.subscribedPopulation; //Sum up all the subscribers
+	    	  if (record.customer.getPowerType() == pt || pt == null)
+	    		  result += record.subscribedPopulation; //Sum up all the subscribers
 	      }
 	    }
 	    return result;
-  }
+}
   
   // Customer produces or consumes power. We assume the kwh value is negative
   // for production, positive for consumption
@@ -306,11 +324,12 @@ private void printTariffRepo(){
 	    }
 	    return result; 
 }
-public int getTotalCustomers()
+public int getTotalCustomers(PowerType pt)
 {
 	int result = 0;
 	for ( CustomerInfo cons : customerRepo.list()){
-		result += cons.getPopulation();
+		if(cons.getPowerType()==pt || pt == null)
+			result += cons.getPopulation();
 	}
 	return result;
 }
@@ -479,7 +498,7 @@ public int getTotalCustomers()
   {
 	//Beginning of timeslot
 	printTimeSlot(); //we print the timeslot #
-	System.out.println("Current subscribers: " + collectSubscribers() + " out of " + getTotalCustomers());
+	System.out.println("Current subscribers: " + collectSubscribers(null) + " out of " + getTotalCustomers(null));
 	System.out.println("Current production: " + getEProduced(timeslotIndex) + "kwh.");
 	System.out.println("Current consumption: " + getEConsumed(timeslotIndex)+ "kwh.");
     if (customerSubscriptions.size() == 0) { //Needs fixing
@@ -567,11 +586,13 @@ public int getTotalCustomers()
   {
 	  if(newspec == null) { System.out.println("Trying to publish null tariff");return; }
 	  tariffRepo.addSpecification(newspec);
+	  addOwnTariff(newspec);
       brokerContext.sendMessage(newspec);
   }
   private void revoke(TariffSpecification oldspec)
   {
 	  if(oldspec == null) { System.out.println("Trying to revoke null tariff");return; }
+	  getOwnTariffs(oldspec.getPowerType()).remove(oldspec);
       TariffRevoke revoke = new TariffRevoke(brokerContext.getBroker(), oldspec);
       brokerContext.sendMessage(revoke);
   }
@@ -705,9 +726,8 @@ private TariffSpecification worsen(TariffSpecification spec)
    		for (PowerType pt : customerProfiles.keySet()){
    			if(pt.isConsumption()) //we only care for production at this stage
    				continue; 
-   			for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByPowerType(pt)){
-       			if(spec.getBroker().equals(brokerContext.getBroker()) )
-       			{
+   			for(TariffSpecification spec: getOwnTariffs(pt)){
+
        				//Improve The production Tariff
        				if(predImbaPrcge >0.1){
        					System.out.println("(E)Trying to improve:");
@@ -720,23 +740,21 @@ private TariffSpecification worsen(TariffSpecification spec)
            				TariffSpecification newspec = worsen(spec);
            				supersede(spec, newspec);
        				}
-       				break; //ASSUMING WE ONLY GOT 1 TARIFF FOR EACH POWER TYPE
-        		}
+
     		}
 
     	}
    		
     	//now check our subscribed customers
-    	double customerPercentage = collectSubscribers()/getTotalCustomers();
+    	double customerPercentage = 0.0;
    		for (PowerType pt : customerProfiles.keySet()){
    			if(pt.isProduction()) //we only care for consumption at this stage
    				continue; 
-   			for(TariffSpecification spec: tariffRepo.findTariffSpecificationsByPowerType(pt)){
-       			if(spec.getBroker().equals(brokerContext.getBroker()) ) //Only improve our tariffs ofc :-)
-       			{
+   			customerPercentage = ((double)collectSubscribers(pt))/getTotalCustomers(pt);
+   			for(TariffSpecification spec: getOwnTariffs(pt)){
        				//Improve The consumption Tariff to get more customers
        				if(customerPercentage < 0.33){
-       					System.out.println("(S)Trying to improve:");
+       					System.out.println("(C)Trying to improve:");
            				printTariff(spec);
            				TariffSpecification newspec = improve(spec);
            				supersede(spec, newspec);
@@ -747,8 +765,6 @@ private TariffSpecification worsen(TariffSpecification spec)
            				//TariffSpecification newspec = worsen(spec);
            				//supersede(spec, newspec);
        				}
-       				break; //ASSUMING WE ONLY GOT 1 TARIFF FOR EACH POWER TYPE
-        		}
     		}
 
     	}
