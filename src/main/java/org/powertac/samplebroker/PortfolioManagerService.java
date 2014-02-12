@@ -122,6 +122,9 @@ implements PortfolioManager, Initializable, Activatable
   @ConfigurableValue(valueType = "Double",
           description = "Default Early withdrawal penalty")
   private double defaultEarlyWithdraw = -4.0;
+  @ConfigurableValue(valueType = "Long",
+          description = "Default Minimum Duration")
+  private long defaultMinDuration = 168;
   
   
 
@@ -583,6 +586,7 @@ public int getTotalCustomers(PowerType pt)
               .withPeriodicPayment(defaultPeriodicPayment);
       spec.withSignupPayment(defaultSubscriptionPayment);
       spec.withEarlyWithdrawPayment(defaultEarlyWithdraw);
+      spec.withMinDuration(defaultMinDuration);
       Rate rate = new Rate().withValue(rateValue);
       if (pt.isInterruptible()) {
         // set max curtailment
@@ -667,8 +671,10 @@ public int getTotalCustomers(PowerType pt)
 	  
 	  
 	  double rateValue, periodic, subscription, withdraw;
+	  long minDur;
 	  subscription = spec.getSignupPayment();
 	  withdraw = spec.getEarlyWithdrawPayment();
+	  minDur = spec.getMinDuration();
 	  if(spec.getPowerType().isConsumption()){
 	      rateValue = spec.getRates().get(0).getValue() *0.95;
 	      periodic = spec.getPeriodicPayment()*0.9;
@@ -684,6 +690,7 @@ public int getTotalCustomers(PowerType pt)
                   .withPeriodicPayment(periodic);
       newspec.withSignupPayment(subscription);
       newspec.withEarlyWithdrawPayment(withdraw);
+      newspec.withMinDuration(minDur);
       Rate rate = new Rate().withValue(rateValue);
       newspec.addRate(rate);
       
@@ -694,8 +701,10 @@ private TariffSpecification worsen(TariffSpecification spec)
 {
 
 	  double rateValue, periodic, subscription, withdraw;
+	  long minDur;
 	  subscription = spec.getSignupPayment();
 	  withdraw = spec.getEarlyWithdrawPayment();
+	  minDur = spec.getMinDuration();
 	  if(spec.getPowerType().isConsumption()){
 	      rateValue = spec.getRates().get(0).getValue() *1.1;
 	      periodic = spec.getPeriodicPayment()*1.1;
@@ -709,6 +718,7 @@ private TariffSpecification worsen(TariffSpecification spec)
                 .withPeriodicPayment(periodic);
     newspec.withSignupPayment(subscription);
     newspec.withEarlyWithdrawPayment(withdraw);
+    newspec.withMinDuration(minDur);
     Rate rate = new Rate().withValue(rateValue);
     newspec.addRate(rate);
     
