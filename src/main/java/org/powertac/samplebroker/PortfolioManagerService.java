@@ -518,7 +518,7 @@ public int getTotalCustomers()
 	  if(spec.getPowerType().isProduction())
 		  result = -result;
 	  printTariff(spec);
-	  System.out.println("TariffEvaluated at: " + result/n);
+	  System.out.println("Tariff " + spec.getId() + " evaluated at: " + result/n);
 	  return result/n;
 	  
   }
@@ -738,10 +738,11 @@ private TariffSpecification worsen(TariffSpecification spec)
            				TariffSpecification newspec = improve(spec);
            				supersede(spec, newspec);
        				}else{
-       					System.out.println("Trying to worsen:");
-           				printTariff(spec);
-           				TariffSpecification newspec = worsen(spec);
-           				supersede(spec, newspec);
+       					//Let's not worsen our tariffs at this stage..
+       					//System.out.println("Trying to worsen:");
+           				//printTariff(spec);
+           				//TariffSpecification newspec = worsen(spec);
+           				//supersede(spec, newspec);
        				}
         		}
     		}
