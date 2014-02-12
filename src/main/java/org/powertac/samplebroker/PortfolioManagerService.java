@@ -121,10 +121,10 @@ implements PortfolioManager, Initializable, Activatable
   
   @ConfigurableValue(valueType = "Double",
           description = "Default Early withdrawal penalty")
-  private double defaultEarlyWithdraw = -4.0;
+  private double defaultEarlyWithdraw = -9.0;
   @ConfigurableValue(valueType = "Long",
           description = "Default Minimum Duration")
-  private long defaultMinDuration = 168;
+  private long defaultMinDuration = 600;
   
   
 
@@ -979,6 +979,7 @@ private TariffSpecification worsen(TariffSpecification spec)
         log.warn("usage requested for negative index " + index);
         index = 0;
       }
+      System.out.println("Usage: " + usage[getIndex(index)] + "Subs: " + subscribedPopulation);
       //System.out.println(" Usage: " + usage[getIndex(index)] + "subscribed population: " + subscribedPopulation);
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
