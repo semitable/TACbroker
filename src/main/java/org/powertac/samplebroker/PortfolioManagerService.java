@@ -30,6 +30,7 @@ import org.powertac.common.Tariff;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.TariffTransaction;
 import org.powertac.common.TimeService;
+import org.powertac.common.WeatherReport;
 import org.powertac.common.config.ConfigurableValue;
 import org.powertac.common.enumerations.PowerType;
 import org.powertac.common.msg.BalancingControlEvent;
@@ -48,7 +49,6 @@ import org.powertac.samplebroker.interfaces.MarketManager;
 import org.powertac.samplebroker.interfaces.PortfolioManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import org.powertac.common.TariffEvaluationHelper;
 /**
  * Handles portfolio-management responsibilities for the broker. This
@@ -126,7 +126,8 @@ implements PortfolioManager, Initializable, Activatable
           description = "Default Minimum Duration")
   private long defaultMinDuration = 600;
   
-  
+	CustomerHistoryDetails[][] CustomerHistArray=new CustomerHistoryDetails[24][7];//spyros.pinakas palion dedomenon
+
 
   /**
    * Default constructor registers for messages, must be called after 
@@ -1019,7 +1020,9 @@ private TariffSpecification worsen(TariffSpecification spec)
     */
     void populateCustomerHistory(int rawIndex, double kwh, WeatherReport weather)
     {
-	customerHistory[rawIndex%24][rawIndex/24].add(new CustomerHistoryDetails(kwh, weather));
+    	
+    	CustomerHistArray[rawIndex%24][rawIndex/24]=new CustomerHistoryDetails(kwh, weather);
+    	//CustomerHistoryDetails [rawIndex%24][rawIndex/24].add(new CustomerHistoryDetails(kwh, weather));
     }  
 }
 
@@ -1038,11 +1041,12 @@ private TariffSpecification worsen(TariffSpecification spec)
 	double kwh;
 	WeatherReport weather;
 	
-        CustomerHistoryDetails(double kwh,WheatherReport weather)
+        CustomerHistoryDetails(double kwh,WeatherReport weather)
 	{
 		this.kwh=kwh;
 		this.weather=weather;
 	}
-
+    
   }
+}
 
