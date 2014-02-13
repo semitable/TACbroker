@@ -336,7 +336,13 @@ implements MarketManager, Initializable, Activatable
 	int count2=0;
 	double AVG_Solar_Sunny=0;
 	double AVG_Solar_Cloudy=0;
+	int count3=0;
+	int count4=0;
+	double AVG_Wind_Windy=0;
+	double AVG_Wind_No_Windy=0;
 	
+	/*See the previous slots how much was the AVG solar power based on weather 
+	 * we see only few slots before so the number of our customers-producers will be the same*/
 	if (CurrentTimeSlot>350){
 		for (int i=24;i<35;i++){
 			double WP = getWeatherReport(CurrentTimeSlot-i).getCloudCover();
@@ -349,10 +355,36 @@ implements MarketManager, Initializable, Activatable
 				count1++;
 			}
 		}
-		AVG_Solar_Sunny=AVG_Solar_Sunny/count1;
-		AVG_Solar_Cloudy=AVG_Solar_Cloudy/count2;
+		if (count1>0){
+			AVG_Solar_Sunny=AVG_Solar_Sunny/count1;
+		}
+		if (count2>0){
+			AVG_Solar_Cloudy=AVG_Solar_Cloudy/count2;
+		}
+		
 		System.out.println("AVG Solar Energy Sunny Day:"+AVG_Solar_Sunny);
 		System.out.println("AVG Solar Energy Cloudy Day:"+AVG_Solar_Cloudy);
+		
+		for (int i=24;i<35;i++){
+			double WP = getWeatherReport(CurrentTimeSlot-i).getWindSpeed();
+			if (WP>2.5){
+				AVG_Wind_Windy += portfolioManager.getWindEnergy(CurrentTimeSlot-i);
+				count3++;
+			}
+			else{
+				AVG_Wind_No_Windy+= portfolioManager.getWindEnergy(CurrentTimeSlot-i);
+				count4++;
+			}
+		}
+		if (count3>0){
+			AVG_Wind_Windy=AVG_Wind_Windy/count3;
+		}
+		if (count4>0){
+			AVG_Wind_No_Windy=AVG_Wind_No_Windy/count4;
+		}
+		
+		System.out.println("AVG Wind Energy Windy Day:"+AVG_Wind_Windy);
+		System.out.println("AVG Wind Energy Tranquil Day:"+AVG_Wind_No_Windy);
 	}
 	
 	

@@ -29,4 +29,5 @@ public interface PortfolioManager
 
 public double getTotalStorage(int index); 
 public double getSolarEnergy(int index);
+public double getWindEnergy(int index);
 }
