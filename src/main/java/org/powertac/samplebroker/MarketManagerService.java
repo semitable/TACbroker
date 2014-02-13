@@ -311,6 +311,7 @@ implements MarketManager, Initializable, Activatable
   private void submitOrder2 (double neededKWh, int timeslot)
   {
     double neededMWh = neededKWh / 1000.0;
+    int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
 
     MarketPosition posn =
         broker.getBroker().findMarketPositionByTimeslot(timeslot);
@@ -328,12 +329,36 @@ implements MarketManager, Initializable, Activatable
     
     
     Order order;
-System.out.println("Current TimeSlot:"+timeslotRepo.currentSerialNumber());
-System.out.println("Order for TimeSlot:"+timeslot);
-double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
-neededMWh=+CustomerStorageCapacity*0.4;
-System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
-    if (timeslotRepo.currentSerialNumber()==timeslot){
+	System.out.println("Current TimeSlot:"+CurrentTimeSlot);
+	System.out.println("Order for TimeSlot:"+timeslot);
+	
+	int count1=0;
+	int count2=0;
+	double AVG_Solar_Sunny=0;
+	double AVG_Solar_Cloudy=0;
+	
+	if (CurrentTimeSlot>350){
+		for (int i=24;i<35;i++){
+			double WP = getWeatherReport(CurrentTimeSlot-i).getCloudCover();
+			if (WP>0.5){
+				AVG_Solar_Cloudy += portfolioManager.getSolarEnergy(CurrentTimeSlot-i);
+				count2++;
+			}
+			else{
+				AVG_Solar_Sunny+= portfolioManager.getSolarEnergy(CurrentTimeSlot-i);
+				count1++;
+			}
+		}
+		AVG_Solar_Sunny=AVG_Solar_Sunny/count1;
+		AVG_Solar_Cloudy=AVG_Solar_Cloudy/count2;
+	}
+	
+	
+	double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
+	neededMWh=+CustomerStorageCapacity*0.4;
+	System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
+	
+    if (CurrentTimeSlot==timeslot){
     	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
     	System.out.println("Buying for the current timeslot");
     }
