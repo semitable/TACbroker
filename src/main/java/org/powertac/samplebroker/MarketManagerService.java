@@ -351,6 +351,8 @@ implements MarketManager, Initializable, Activatable
 		}
 		AVG_Solar_Sunny=AVG_Solar_Sunny/count1;
 		AVG_Solar_Cloudy=AVG_Solar_Cloudy/count2;
+		System.out.println("AVG Solar Energy Sunny Day:"+AVG_Solar_Sunny);
+		System.out.println("AVG Solar Energy Cloudy Day:"+AVG_Solar_Cloudy);
 	}
 	
 	

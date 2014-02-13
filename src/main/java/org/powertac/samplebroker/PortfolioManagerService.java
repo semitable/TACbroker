@@ -326,7 +326,6 @@ private void printTariffRepo(){
 	    		  result += record.getUsage(index); //Sum up all the production (Negative)
 	      }
 	    }
-	    System.out.println("Solar Energy:"+result);
 	    return result; 
   }
   
