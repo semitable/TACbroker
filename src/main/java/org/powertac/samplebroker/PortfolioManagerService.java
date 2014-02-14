@@ -547,10 +547,12 @@ public int getTotalCustomers(PowerType pt)
 	  PowerType pt = spec.getPowerType();
 	  int n = 0;
 	  for (CustomerRecord c : customerProfiles.get(pt).values()){
+		  if (c.customer == null)
+		  	continue;
 		  result += evaluateTariff(c, spec); n++;
 	  }
-	  //if(spec.getPowerType().isProduction())
-		//  result = -result;
+	  if(spec.getPowerType().isProduction())
+		  result = -result;
 
 	  System.out.println("Tariff " + spec.getId() + " evaluated at: " + result/n);
 	  return result/n;
@@ -559,9 +561,10 @@ public int getTotalCustomers(PowerType pt)
   
   private double normalizedCostDifference(TariffSpecification defaultSpec, TariffSpecification iSpec){
 	  double result= 0.0;
-	  
-	  //Cost(default) = Sum0->d (Usage[], pv(default), pp(default)
-	  
+	 // int simulationWeeksLeft = brokerContext.
+	  //Cost(default) = Sum0->d (Usage[], pv(default), pp(default)...
+	  //double CostDefault = evaluateTariff(defaultSpec) * simulationWeeksLeft;
+	  //double Costi = evaluateTariff(iSpec)*simulationWeeksLeft + iSpec.getSignupPayment() + defaultSpec.getEarlyWithdrawPayment() + iSpec.getEarlyWithdrawPayment()*Math.min(1.0, iSpec.getMinDuration()/SimulationWeeksLeft);
 	  return result;
 	
   }
