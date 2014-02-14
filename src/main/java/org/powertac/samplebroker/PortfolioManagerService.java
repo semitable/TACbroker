@@ -126,8 +126,6 @@ implements PortfolioManager, Initializable, Activatable
           description = "Default Minimum Duration")
   private long defaultMinDuration = 600;
   
-	CustomerHistoryDetails[][] CustomerHistArray=new CustomerHistoryDetails[24][7];//spyros.pinakas palion dedomenon
-
 
   /**
    * Default constructor registers for messages, must be called after 
@@ -551,15 +549,22 @@ public int getTotalCustomers(PowerType pt)
 	  for (CustomerRecord c : customerProfiles.get(pt).values()){
 		  result += evaluateTariff(c, spec); n++;
 	  }
-	  if(spec.getPowerType().isProduction())
-		  result = -result;
+	  //if(spec.getPowerType().isProduction())
+		//  result = -result;
 
 	  System.out.println("Tariff " + spec.getId() + " evaluated at: " + result/n);
 	  return result/n;
 	  
   }
   
-  
+  private double normalizedCostDifference(TariffSpecification defaultSpec, TariffSpecification iSpec){
+	  double result= 0.0;
+	  
+	  //Cost(default) = Sum0->d (Usage[], pv(default), pp(default)
+	  
+	  return result;
+	
+  }
   
   
   // Creates initial tariffs for the main power types. These are simple
@@ -909,7 +914,7 @@ private TariffSpecification worsen(TariffSpecification spec)
     int subscribedPopulation = 0;
     double[] usage;
 //TODO:make a Hashmap in the form of <Customer, ArrayList[][]>
-  //  ArrayList[][] customerHistory; 
+    List<Double> consumptionHistory; 
     double alpha = 0.3;
     
     
@@ -921,6 +926,8 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = customer;
       this.usage = new double[brokerContext.getUsageRecordLength()];
+      consumptionHistory = new ArrayList<Double>();
+      
     //  this.customerHistory=new ArrayList[24][7];
       
     //  for (ArrayList[] i : customerHistory){
@@ -935,6 +942,7 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = oldRecord.customer;
       this.usage = Arrays.copyOf(oldRecord.usage, brokerContext.getUsageRecordLength());
+      consumptionHistory = new ArrayList<Double>();
   //    this.customerHistory=new ArrayList[24][7];
       
     //  for (ArrayList[] i : customerHistory){
@@ -945,6 +953,10 @@ private TariffSpecification worsen(TariffSpecification spec)
  
     }
     
+    double getConsumption(int day, int hour)
+    {
+    	return consumptionHistory.get(day*24+hour);
+    }
     // Returns the CustomerInfo for this record
     CustomerInfo getCustomerInfo ()
     {
@@ -977,6 +989,12 @@ private TariffSpecification worsen(TariffSpecification spec)
     {
       int index = getIndex(rawIndex);
       double kwhPerCustomer = kwh / (double)subscribedPopulation;
+      
+      
+      while(consumptionHistory.size() < rawIndex-1)
+    	  consumptionHistory.add(0.0);
+      consumptionHistory.add(kwhPerCustomer);
+      
       double oldUsage = usage[index];
       if (oldUsage == 0.0) {
         // assume this is the first time
@@ -1021,7 +1039,7 @@ private TariffSpecification worsen(TariffSpecification spec)
     void populateCustomerHistory(int rawIndex, double kwh, WeatherReport weather)
     {
     	
-    	CustomerHistArray[rawIndex%24][rawIndex/24]=new CustomerHistoryDetails(kwh, weather);
+    	//CustomerHistArray[rawIndex%24][rawIndex/24]=new CustomerHistoryDetails(kwh, weather);
     	//CustomerHistoryDetails [rawIndex%24][rawIndex/24].add(new CustomerHistoryDetails(kwh, weather));
     }  
 }
