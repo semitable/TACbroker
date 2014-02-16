@@ -104,6 +104,7 @@ implements MarketManager, Initializable, Activatable
 
   //private HashMap<Integer, ArrayList<MarketTransaction>> marketTxMap;
   private ArrayList<WeatherReport> weather;
+  private ArrayList<WeatherForecast> Forecast;
   private ArrayList<Orderbook> OrderBook;
 
   public MarketManagerService ()
@@ -247,6 +248,11 @@ implements MarketManager, Initializable, Activatable
    */
   public void handleMessage (WeatherForecast forecast)
   {
+	  Forecast.add(forecast);
+  }
+  
+  public WeatherForecast getWeatherForecast(int timeslotIndex){
+	  return Forecast.get(timeslotIndex);
   }
 
   /**
@@ -365,15 +371,22 @@ implements MarketManager, Initializable, Activatable
 		System.out.println("AVG Solar Energy Sunny Day:"+AVG_Solar_Sunny);
 		System.out.println("AVG Solar Energy Cloudy Day:"+AVG_Solar_Cloudy);
 		
+		double FR_direction = getWeatherForecast(timeslot).getPredictions().get(timeslot).getWindDirection();
+		
 		for (int i=24;i<35;i++){
 			double WP = getWeatherReport(CurrentTimeSlot-i).getWindSpeed();
+			double WP_direction = getWeatherReport(CurrentTimeSlot-i).getWindDirection();
 			if (WP>2.5){
-				AVG_Wind_Windy += portfolioManager.getWindEnergy(CurrentTimeSlot-i);
-				count3++;
+				if (Math.abs(WP_direction-FR_direction)<30){
+					AVG_Wind_Windy += portfolioManager.getWindEnergy(CurrentTimeSlot-i);
+					count3++;
+				}
 			}
 			else{
-				AVG_Wind_No_Windy+= portfolioManager.getWindEnergy(CurrentTimeSlot-i);
-				count4++;
+				if (Math.abs(WP_direction-FR_direction)<30){
+					AVG_Wind_No_Windy+= portfolioManager.getWindEnergy(CurrentTimeSlot-i);
+					count4++;
+				}
 			}
 		}
 		if (count3>0){
