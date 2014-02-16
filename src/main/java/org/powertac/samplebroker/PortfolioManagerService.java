@@ -30,6 +30,7 @@ import org.powertac.common.Tariff;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.TariffTransaction;
 import org.powertac.common.TimeService;
+import org.powertac.common.WeatherReport;
 import org.powertac.common.config.ConfigurableValue;
 import org.powertac.common.enumerations.PowerType;
 import org.powertac.common.msg.BalancingControlEvent;
@@ -48,7 +49,6 @@ import org.powertac.samplebroker.interfaces.MarketManager;
 import org.powertac.samplebroker.interfaces.PortfolioManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import org.powertac.common.TariffEvaluationHelper;
 /**
  * Handles portfolio-management responsibilities for the broker. This
@@ -114,6 +114,18 @@ implements PortfolioManager, Initializable, Activatable
   @ConfigurableValue(valueType = "Double",
           description = "Default daily meter charge")
   private double defaultPeriodicPayment = -1.0;
+  
+  @ConfigurableValue(valueType = "Double",
+          description = "Subscription Payment")
+  private double defaultSubscriptionPayment = -7.0;
+  
+  @ConfigurableValue(valueType = "Double",
+          description = "Default Early withdrawal penalty")
+  private double defaultEarlyWithdraw = -25.0;
+  @ConfigurableValue(valueType = "Long",
+          description = "Default Minimum Duration")
+  private long defaultMinDuration = 600;
+  
 
   /**
    * Default constructor registers for messages, must be called after 
@@ -284,7 +296,7 @@ private void printTariffRepo(){
 	    int result = 0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if (record.customer == null){ System.out.println("Null Customer Record"); continue; }
+	    	  if (record.customer == null){ /*System.out.println("Null Customer Record"); */ continue; } //TODO: many null customer records.. Must check
 	    	  if (pt == null || record.customer.getPowerType().equals(pt))
 	    		  result += record.subscribedPopulation; //Sum up all the subscribers
 	      }
@@ -567,6 +579,8 @@ public int getTotalCustomers(PowerType pt)
 	  PowerType pt = spec.getPowerType();
 	  int n = 0;
 	  for (CustomerRecord c : customerProfiles.get(pt).values()){
+		  if (c.customer == null)
+		  	continue;
 		  result += evaluateTariff(c, spec); n++;
 	  }
 	  if(spec.getPowerType().isProduction())
@@ -577,7 +591,15 @@ public int getTotalCustomers(PowerType pt)
 	  
   }
   
-  
+  private double normalizedCostDifference(TariffSpecification defaultSpec, TariffSpecification iSpec){
+	  double result= 0.0;
+	 // int simulationWeeksLeft = brokerContext.
+	  //Cost(default) = Sum0->d (Usage[], pv(default), pp(default)...
+	  //double CostDefault = evaluateTariff(defaultSpec) * simulationWeeksLeft;
+	  //double Costi = evaluateTariff(iSpec)*simulationWeeksLeft + iSpec.getSignupPayment() + defaultSpec.getEarlyWithdrawPayment() + iSpec.getEarlyWithdrawPayment()*Math.min(1.0, iSpec.getMinDuration()/SimulationWeeksLeft);
+	  return result;
+	
+  }
   
   
   // Creates initial tariffs for the main power types. These are simple
@@ -603,6 +625,9 @@ public int getTotalCustomers(PowerType pt)
       TariffSpecification spec =
           new TariffSpecification(brokerContext.getBroker(), pt)
               .withPeriodicPayment(defaultPeriodicPayment);
+      spec.withSignupPayment(defaultSubscriptionPayment);
+      spec.withEarlyWithdrawPayment(defaultEarlyWithdraw);
+      spec.withMinDuration(defaultMinDuration);
       Rate rate = new Rate().withValue(rateValue);
       if (pt.isInterruptible()) {
         // set max curtailment
@@ -686,12 +711,15 @@ public int getTotalCustomers(PowerType pt)
 		  return spec; //no improvement needed//?we might want to worsen()?
 	  
 	  
-	  double rateValue, periodic;
+	  double rateValue, periodic, subscription, withdraw;
+	  long minDur;
+	  subscription = spec.getSignupPayment();
+	  withdraw = spec.getEarlyWithdrawPayment();
+	  minDur = spec.getMinDuration();
 	  if(spec.getPowerType().isConsumption()){
-	      rateValue = spec.getRates().get(0).getValue() *0.95;
+	      rateValue = spec.getRates().get(0).getValue() *0.8;
 	      periodic = spec.getPeriodicPayment()*0.9;
-	      }
-	  else{ //is production
+	  }else{ //is production
 	      rateValue = spec.getRates().get(0).getValue() *1.1;
 	      periodic = spec.getPeriodicPayment()*0.9;
 	  }
@@ -700,6 +728,9 @@ public int getTotalCustomers(PowerType pt)
       TariffSpecification newspec =
               new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
                   .withPeriodicPayment(periodic);
+      newspec.withSignupPayment(subscription);
+      newspec.withEarlyWithdrawPayment(withdraw);
+      newspec.withMinDuration(minDur);
       Rate rate = new Rate().withValue(rateValue);
       newspec.addRate(rate);
       
@@ -708,8 +739,12 @@ public int getTotalCustomers(PowerType pt)
   }
 private TariffSpecification worsen(TariffSpecification spec)
 {
-  
-	  double rateValue, periodic;
+
+	  double rateValue, periodic, subscription, withdraw;
+	  long minDur;
+	  subscription = spec.getSignupPayment();
+	  withdraw = spec.getEarlyWithdrawPayment();
+	  minDur = spec.getMinDuration();
 	  if(spec.getPowerType().isConsumption()){
 	      rateValue = spec.getRates().get(0).getValue() *1.1;
 	      periodic = spec.getPeriodicPayment()*1.1;
@@ -721,6 +756,9 @@ private TariffSpecification worsen(TariffSpecification spec)
     TariffSpecification newspec =
             new TariffSpecification(brokerContext.getBroker(), spec.getPowerType())
                 .withPeriodicPayment(periodic);
+    newspec.withSignupPayment(subscription);
+    newspec.withEarlyWithdrawPayment(withdraw);
+    newspec.withMinDuration(minDur);
     Rate rate = new Rate().withValue(rateValue);
     newspec.addRate(rate);
     
@@ -788,11 +826,16 @@ private TariffSpecification worsen(TariffSpecification spec)
    			for(TariffSpecification spec: getOwnTariffs(pt)){
        				//Improve The consumption Tariff to get more customers
        				if(customerPercentage < 0.33){
-       					System.out.println("(C)Trying to improve:");
+       					System.out.println("(C)Trying to surpass:");
            				printTariff(spec);
-           				TariffSpecification newspec = improve(spec);
+           				//TariffSpecification newspec = improve(spec);
+           				TariffSpecification newspec = surpass(spec);
            				supersede(spec, newspec);
-       				}else{
+       				}else if (customerPercentage < 0.70){
+       					System.out.println("(C)Trying to improve:");
+       					printTariff(spec);
+       					TariffSpecification newspec = improve(spec);
+       					supersede(spec, newspec);
        					//Let's not worsen our tariffs at this stage..
        					//System.out.println("Trying to worsen:");
            				//printTariff(spec);
@@ -905,7 +948,8 @@ private TariffSpecification worsen(TariffSpecification spec)
     CustomerInfo customer;
     int subscribedPopulation = 0;
     double[] usage;
-    double[] storage;
+//TODO:make a Hashmap in the form of <Customer, ArrayList[][]>
+    List<Double> consumptionHistory; 
     double alpha = 0.3;
     
     
@@ -917,6 +961,15 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = customer;
       this.usage = new double[brokerContext.getUsageRecordLength()];
+      consumptionHistory = new ArrayList<Double>();
+      
+    //  this.customerHistory=new ArrayList[24][7];
+      
+    //  for (ArrayList[] i : customerHistory){
+//	for (ArrayList cell : i){
+//	  cell=new ArrayList<CustomerHistoryDetails>();
+//	}
+  //    }
     }
     
     CustomerRecord (CustomerRecord oldRecord)
@@ -924,8 +977,21 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = oldRecord.customer;
       this.usage = Arrays.copyOf(oldRecord.usage, brokerContext.getUsageRecordLength());
+      consumptionHistory = new ArrayList<Double>();
+  //    this.customerHistory=new ArrayList[24][7];
+      
+    //  for (ArrayList[] i : customerHistory){
+//	for (ArrayList cell : i){
+//	  cell=new ArrayList<CustomerHistoryDetails>();
+//	}
+  //    }
+ 
     }
     
+    double getConsumption(int day, int hour)
+    {
+    	return consumptionHistory.get(day*24+hour);
+    }
     // Returns the CustomerInfo for this record
     CustomerInfo getCustomerInfo ()
     {
@@ -958,6 +1024,12 @@ private TariffSpecification worsen(TariffSpecification spec)
     {
       int index = getIndex(rawIndex);
       double kwhPerCustomer = kwh / (double)subscribedPopulation;
+      
+      
+      while(consumptionHistory.size() < rawIndex-1)
+    	  consumptionHistory.add(0.0);
+      consumptionHistory.add(kwhPerCustomer);
+      
       double oldUsage = usage[index];
       if (oldUsage == 0.0) {
         // assume this is the first time
@@ -977,6 +1049,7 @@ private TariffSpecification worsen(TariffSpecification spec)
         log.warn("usage requested for negative index " + index);
         index = 0;
       }
+      //System.out.println("Usage: " + usage[getIndex(index)] + "Subs: " + subscribedPopulation);
       //System.out.println(" Usage: " + usage[getIndex(index)] + "subscribed population: " + subscribedPopulation);
       return (usage[getIndex(index)] * (double)subscribedPopulation);
     }
@@ -995,6 +1068,38 @@ private TariffSpecification worsen(TariffSpecification spec)
       return rawIndex % usage.length;
     }
 
-  }
-
+    /*
+    *function to populate customerHistory
+    */
+    void populateCustomerHistory(int rawIndex, double kwh, WeatherReport weather)
+    {
+    	
+    	//CustomerHistArray[rawIndex%24][rawIndex/24]=new CustomerHistoryDetails(kwh, weather);
+    	//CustomerHistoryDetails [rawIndex%24][rawIndex/24].add(new CustomerHistoryDetails(kwh, weather));
+    }  
 }
+
+
+  //TODO:maybe weather is no needed!! (If so, this class is useless. In that case just replace this class with kwh)
+  /**
+  *CustomerHistoryDetails class
+  *per customer model per timeslot
+  * detailed consumption/production history
+  *and weather report.
+  *
+  *used for prediction
+  */
+  class CustomerHistoryDetails
+  {
+	double kwh;
+	WeatherReport weather;
+	
+        CustomerHistoryDetails(double kwh,WeatherReport weather)
+	{
+		this.kwh=kwh;
+		this.weather=weather;
+	}
+    
+  }
+}
+
