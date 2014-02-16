@@ -400,10 +400,25 @@ implements MarketManager, Initializable, Activatable
 		System.out.println("AVG Wind Energy Tranquil Day:"+AVG_Wind_No_Windy);
 	}
 	
-	
+	/*Buy additional energy up to the 40% percent of the total storage of customers*/
 	double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
 	neededMWh=+CustomerStorageCapacity*0.4;
 	System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
+	
+	/*Buy Additional energy based of lack of solar production*/
+	if (getWeatherForecast(timeslot).getPredictions().get(timeslot).getCloudCover() <0.5){  //if it is going to be cloudy
+		if (AVG_Solar_Sunny-AVG_Solar_Cloudy>0){											//might have change the customers so cloudy days might have more production
+			neededMWh += AVG_Solar_Sunny-AVG_Solar_Cloudy;									//buys addition energy because of lack of solar production
+		}
+	}
+	
+	/*Buy Additional energy based of lack of wind production*/
+	if (getWeatherForecast(timeslot).getPredictions().get(timeslot).getWindSpeed()>2.5){	//windy day
+		if (AVG_Wind_Windy>AVG_Wind_No_Windy){												//might have change the customers so cloudy days might have more production
+			neededMWh +=AVG_Wind_Windy-AVG_Wind_No_Windy;									//buys addition energy because of lack of solar production
+		}
+	}
+	
 	
     if (CurrentTimeSlot==timeslot){
     	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
