@@ -317,16 +317,19 @@ private void printTariffRepo(){
 	    }
 	    return result; 
   }
+  
+  /*Calculates the total storage of the customers*/
   public double getTotalStorage(int index)
   {
 	  double result = 0.0;
 	  for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	  	for (CustomerRecord record : customerMap.values()) {
-	    	//result += record.getCustomerInfo().getStorageCapacity() * record.subscribedPopulation;
+	  		if(record.customer!= null){
+		  		result += record.customer.getStorageCapacity()*record.subscribedPopulation;
+	  		}
 	    }
 	  }
-	  //return result;
-	  return 15;
+	  return result;
   }
   
   public double getSolarEnergy(int index)
