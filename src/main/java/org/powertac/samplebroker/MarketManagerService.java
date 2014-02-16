@@ -124,6 +124,7 @@ implements MarketManager, Initializable, Activatable
     propertiesService.configureMe(this);
     //marketTxMap = new HashMap<Integer, ArrayList<MarketTransaction>>();
     weather = new ArrayList<WeatherReport>();
+    Forecast = new ArrayList<WeatherForecast>();
     for (Class<?> messageType: Arrays.asList(BalancingTransaction.class,
                                              ClearedTrade.class,
                                              DistributionTransaction.class,
@@ -371,8 +372,8 @@ implements MarketManager, Initializable, Activatable
 		System.out.println("AVG Solar Energy Sunny Day:"+AVG_Solar_Sunny);
 		System.out.println("AVG Solar Energy Cloudy Day:"+AVG_Solar_Cloudy);
 		
-		double FR_direction = getWeatherForecast(timeslot).getPredictions().get(timeslot).getWindDirection();
-		
+		double FR_direction = getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindDirection();
+
 		for (int i=24;i<35;i++){
 			double WP = getWeatherReport(CurrentTimeSlot-i).getWindSpeed();
 			double WP_direction = getWeatherReport(CurrentTimeSlot-i).getWindDirection();
@@ -406,14 +407,14 @@ implements MarketManager, Initializable, Activatable
 	System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
 	
 	/*Buy Additional energy based of lack of solar production*/
-	if (getWeatherForecast(timeslot).getPredictions().get(timeslot).getCloudCover() <0.5){  //if it is going to be cloudy
+	if (getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getCloudCover() <0.5){  //if it is going to be cloudy
 		if (AVG_Solar_Sunny-AVG_Solar_Cloudy>0){											//might have change the customers so cloudy days might have more production
 			neededMWh += AVG_Solar_Sunny-AVG_Solar_Cloudy;									//buys addition energy because of lack of solar production
 		}
 	}
 	
 	/*Buy Additional energy based of lack of wind production*/
-	if (getWeatherForecast(timeslot).getPredictions().get(timeslot).getWindSpeed()>2.5){	//windy day
+	if (getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindSpeed()>2.5){	//windy day
 		if (AVG_Wind_Windy>AVG_Wind_No_Windy){												//might have change the customers so cloudy days might have more production
 			neededMWh +=AVG_Wind_Windy-AVG_Wind_No_Windy;									//buys addition energy because of lack of solar production
 		}
