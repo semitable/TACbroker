@@ -322,7 +322,7 @@ private void printTariffRepo(){
 	  double result = 0.0;
 	  for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	  	for (CustomerRecord record : customerMap.values()) {
-	    	//result += record.getCustomerInfo().getStorageCapacity();
+	    	//result += record.getCustomerInfo().getStorageCapacity() * record.subscribedPopulation;
 	    }
 	  }
 	  //return result;
@@ -334,7 +334,7 @@ private void printTariffRepo(){
 	    double result = 0.0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if((record.getUsage(index) < 0) && (record.getCustomerInfo().getPowerType().SOLAR_PRODUCTION==PowerType.SOLAR_PRODUCTION)){
+	    	  if((record.getUsage(index) < 0) && (record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION)){
 	    		  result += record.getUsage(index); //Sum up all the production (Negative)
 	    	  }	    		  
 	      }
@@ -348,7 +348,7 @@ private void printTariffRepo(){
 	    double result = 0.0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if((record.getUsage(index) < 0) && (record.getCustomerInfo().getPowerType().WIND_PRODUCTION==PowerType.WIND_PRODUCTION))
+	    	  if((record.getUsage(index) < 0) && (record.getCustomerInfo().getPowerType()==PowerType.WIND_PRODUCTION))
 	    		  {
 		    		  result += record.getUsage(index); //Sum up all the production (Negative)
 	    		  }
