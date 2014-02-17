@@ -332,13 +332,16 @@ private void printTariffRepo(){
 	  return result;
   }
   
+  /*Calculates the total Energy production of the customers*/
   public double getSolarEnergy(int index)
   {
 	    double result = 0.0;
+	    int day = index/24;
+	    int hour = index-day*24;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if((record.getUsage(index) < 0) && (record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION)){
-	    		  result += record.getUsage(index); //Sum up all the production (Negative)
+	    	  if(record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION){
+	    		  result += Math.abs(record.getUsage(index)-record.getConsumption(day, hour)); //Sum up all the production (Negative)
 	    	  }	    		  
 	      }
 	    }
