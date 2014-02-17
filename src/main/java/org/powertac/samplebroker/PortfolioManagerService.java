@@ -332,12 +332,22 @@ private void printTariffRepo(){
 	  return result;
   }
   
-  /*Calculates the total Energy production of the customers*/
+  /*Returns Hour given time slot*/
+  public int getHour(int index){
+	  return index - getDay(index)*24;
+  }
+  
+  /*Returns Day given time slot*/
+ public int getDay(int index){
+	 return index/24;
+  }
+ 
+  /*Calculates the total Solar Energy production of the customers*/
   public double getSolarEnergy(int index)
   {
 	    double result = 0.0;
-	    int day = index/24;
-	    int hour = index-day*24;
+	    int day = getDay(index);
+	    int hour = getHour(index);
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
 	    	  if(record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION){
@@ -349,6 +359,7 @@ private void printTariffRepo(){
 	    return result; 
   }
   
+  /*Calculates the total Wind Energy production of the customers*/
   public double getWindEnergy(int index)
   {
 	    double result = 0.0;
