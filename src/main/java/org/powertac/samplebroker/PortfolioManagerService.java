@@ -596,10 +596,12 @@ public int getTotalCustomers(PowerType pt)
   
   private double normalizedCostDifference(TariffSpecification defaultSpec, TariffSpecification iSpec){
 	  double result= 0.0;
-	 // int simulationWeeksLeft = brokerContext.
+	  int simTimeLeft = 1500 - timeslotRepo.currentTimeslot().getSerialNumber(); //? Better change to maxtimeslot - cur timeslot
+	  int simWeeksLeft = simTimeLeft/(24*7);
 	  //Cost(default) = Sum0->d (Usage[], pv(default), pp(default)...
-	  //double CostDefault = evaluateTariff(defaultSpec) * simulationWeeksLeft;
-	  //double Costi = evaluateTariff(iSpec)*simulationWeeksLeft + iSpec.getSignupPayment() + defaultSpec.getEarlyWithdrawPayment() + iSpec.getEarlyWithdrawPayment()*Math.min(1.0, iSpec.getMinDuration()/SimulationWeeksLeft);
+	  double CostDefault = evaluateTariff(defaultSpec) * simWeeksLeft;
+	  double Costi = evaluateTariff(iSpec)*simWeeksLeft + iSpec.getSignupPayment() + defaultSpec.getEarlyWithdrawPayment() + iSpec.getEarlyWithdrawPayment()*Math.min(1.0, iSpec.getMinDuration()/simTimeLeft);
+	  result = (CostDefault - Costi)/CostDefault;
 	  return result;
 	
   }
@@ -676,7 +678,16 @@ public int getTotalCustomers(PowerType pt)
 	  if (spec == null) { System.out.println("Trying to improve NULL tariff."); return null;}
 	  
 	  PowerType pt = spec.getPowerType();
-	  double own = evaluateTariff(spec), best = own;
+	  TariffSpecification newspec = null;
+	  for (TariffSpecification compSpec : getCompetingTariffs(pt)){
+		  while (normalizedCostDifference(compSpec, spec) <= 0){
+			  if(newspec == null)
+				  newspec = improve(spec);
+			  else
+				  newspec = improve(newspec);
+		  }
+	  }
+	  /*double own = evaluateTariff(spec), best = own;
 	  for (TariffSpecification compSpec : getCompetingTariffs(pt)){
 		  best = Math.min(evaluateTariff(compSpec), best);
 	  }
@@ -692,7 +703,10 @@ public int getTotalCustomers(PowerType pt)
 			  newspec = improve(newspec);
 		  own = evaluateTariff(newspec);
 		  
-	  }while (best < own);
+	  }while (best < own);*/
+	  
+	  
+	  
 	  
 	  return newspec;
 	  
