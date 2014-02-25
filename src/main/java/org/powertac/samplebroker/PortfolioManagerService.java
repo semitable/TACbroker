@@ -819,7 +819,12 @@ private TariffSpecification worsen(TariffSpecification spec)
     		consumePred += getEConsumed(timeslotIndex+i+1);
     		producePred += getEProduced(timeslotIndex+i+1); //negative
     	}
-    	double predImbaPrcge = (consumePred+producePred)/(consumePred-producePred);
+    	double predImbaPrcge;
+    	if ((consumePred-producePred)!=0){
+    		predImbaPrcge = (consumePred+producePred)/(consumePred-producePred);
+    	}else{
+    		predImbaPrcge=0;
+    	}
     	
     	if(predImbaPrcge >0.6)
     		;//Give balancing order with >0 expectage
@@ -979,7 +984,7 @@ private TariffSpecification worsen(TariffSpecification spec)
     CustomerInfo customer;
     int subscribedPopulation = 0;
     double[] usage;
-//TODO:make a Hashmap in the form of <Customer, ArrayList[][]>
+    List<Double>[] custHist;
     List<Double> consumptionHistory; 
     double alpha = 0.3;
     
@@ -992,15 +997,14 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = customer;
       this.usage = new double[brokerContext.getUsageRecordLength()];
-      consumptionHistory = new ArrayList<Double>();
+      this.consumptionHistory = new ArrayList<Double>();
+      this.custHist=(List<Double>[])new List[168];
       
-    //  this.customerHistory=new ArrayList[24][7];
-      
-    //  for (ArrayList[] i : customerHistory){
-//	for (ArrayList cell : i){
-//	  cell=new ArrayList<CustomerHistoryDetails>();
-//	}
-  //    }
+      for(int i=0;i<168;i++){
+				custHist[i]=new ArrayList<Double>();
+				
+      }
+
     }
     
     CustomerRecord (CustomerRecord oldRecord)
@@ -1008,14 +1012,12 @@ private TariffSpecification worsen(TariffSpecification spec)
       super();
       this.customer = oldRecord.customer;
       this.usage = Arrays.copyOf(oldRecord.usage, brokerContext.getUsageRecordLength());
-      consumptionHistory = new ArrayList<Double>();
-  //    this.customerHistory=new ArrayList[24][7];
+      this.consumptionHistory = new ArrayList<Double>();
+      this.custHist=(List<Double>[])new List[168];
+      this.custHist = ( oldRecord.custHist == null ? null : oldRecord.custHist.clone() );
       
-    //  for (ArrayList[] i : customerHistory){
-//	for (ArrayList cell : i){
-//	  cell=new ArrayList<CustomerHistoryDetails>();
-//	}
-  //    }
+      
+
  
     }
     
@@ -1053,6 +1055,8 @@ private TariffSpecification worsen(TariffSpecification spec)
     // store profile data at the given index
     void produceConsume (double kwh, int rawIndex)
     {
+    
+      
       int index = getIndex(rawIndex);
       double kwhPerCustomer = kwh / (double)subscribedPopulation;
       
@@ -1072,6 +1076,9 @@ private TariffSpecification worsen(TariffSpecification spec)
       }
       log.debug("consume " + kwh + " at " + index +
                 ", customer " + customer.getName());
+      
+      custHist[index].add(kwh);
+      
     }
     
     double getUsage (int index)
@@ -1099,38 +1106,8 @@ private TariffSpecification worsen(TariffSpecification spec)
       return rawIndex % usage.length;
     }
 
-    /*
-    *function to populate customerHistory
-    */
-    void populateCustomerHistory(int rawIndex, double kwh, WeatherReport weather)
-    {
-    	
-    	//CustomerHistArray[rawIndex%24][rawIndex/24]=new CustomerHistoryDetails(kwh, weather);
-    	//CustomerHistoryDetails [rawIndex%24][rawIndex/24].add(new CustomerHistoryDetails(kwh, weather));
-    }  
 }
 
 
-  //TODO:maybe weather is no needed!! (If so, this class is useless. In that case just replace this class with kwh)
-  /**
-  *CustomerHistoryDetails class
-  *per customer model per timeslot
-  * detailed consumption/production history
-  *and weather report.
-  *
-  *used for prediction
-  */
-  class CustomerHistoryDetails
-  {
-	double kwh;
-	WeatherReport weather;
-	
-        CustomerHistoryDetails(double kwh,WeatherReport weather)
-	{
-		this.kwh=kwh;
-		this.weather=weather;
-	}
-    
-  }
 }
 
