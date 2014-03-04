@@ -692,7 +692,7 @@ public int getTotalCustomers(PowerType pt)
 	  if (spec == null) { System.out.println("Trying to improve NULL tariff."); return null;}
 	  
 	  PowerType pt = spec.getPowerType();
-	  TariffSpecification newspec = null;
+	  TariffSpecification newspec = spec;
 	  for (TariffSpecification compSpec : getCompetingTariffs(pt)){
 		  while (normalizedCostDifference(compSpec, spec) <= 0){
 			  if(newspec == null)
