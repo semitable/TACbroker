@@ -694,10 +694,7 @@ public int getTotalCustomers(PowerType pt)
 	  PowerType pt = spec.getPowerType();
 	  TariffSpecification newspec = spec;
 	  for (TariffSpecification compSpec : getCompetingTariffs(pt)){
-		  while (normalizedCostDifference(compSpec, spec) <= 0){
-			  if(newspec == null)
-				  newspec = improve(spec);
-			  else
+		  while (normalizedCostDifference(compSpec, newspec) <= 0){
 				  newspec = improve(newspec);
 		  }
 	  }
