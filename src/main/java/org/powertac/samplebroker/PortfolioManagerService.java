@@ -346,14 +346,25 @@ private void printTariffRepo(){
   public double getSolarEnergy(int index)
   {
 	    double result = 0.0;
-	    int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
+	    
 
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if (record.getCustomerInfo()!=null){
+		    	  if(record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION){
+		    		  if (record.getUsage(index)<0){
+		    			  result += Math.abs(record.getUsage(index));
+		    		  }		    		  
+		    	  }	   
+	    	  }
+	      }
+	    }
+	    
+	    /*int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
 	    int day = getDay(index);
 	    int hour = getHour(index);
 	    System.out.println(CurrentTimeSlot+" DAY="+day + " Index="+index);
 	    System.out.println(CurrentTimeSlot+" Hour="+hour + " Index="+index);
-	    
-	  
 	  
 	    
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
@@ -371,7 +382,7 @@ private void printTariffRepo(){
 		    	  }	   
 	    	  }
 	      }
-	    }
+	    }*/
 	    System.out.println("SOLAR"+result);
 	    return result; 
   }
