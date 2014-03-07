@@ -346,13 +346,30 @@ private void printTariffRepo(){
   public double getSolarEnergy(int index)
   {
 	    double result = 0.0;
+	    int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
+
 	    int day = getDay(index);
 	    int hour = getHour(index);
+	    System.out.println(CurrentTimeSlot+" DAY="+day + " Index="+index);
+	    System.out.println(CurrentTimeSlot+" Hour="+hour + " Index="+index);
+	    
+	  
+	  
+	    
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if(record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION){
-	    		  result += Math.abs(record.getUsage(index)-record.getConsumption(day, hour)); //Sum up all the production (Negative)
-	    	  }	    		  
+	    	  if (record.getCustomerInfo()!=null){
+		    	  if(record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION){
+		    		  if (index> record.consumptionHistory.size()){
+		    		    	index = record.consumptionHistory.size(); //record.getConsumptionSize() = 0???
+		    		    	day = getDay(index);
+		    		    	hour = getHour(index);
+		    		    }
+		    		  System.out.println(CurrentTimeSlot+" DAY="+day + " Index="+index);
+		    		  System.out.println(CurrentTimeSlot+" Hour="+hour + " Index="+index);
+		    		  result += Math.abs(record.getUsage(index));//-record.getConsumption(day, hour); //Sum up all the production (Negative)
+		    	  }	   
+	    	  }
 	      }
 	    }
 	    System.out.println("SOLAR"+result);
@@ -1022,6 +1039,11 @@ private TariffSpecification worsen(TariffSpecification spec)
     {
     	return consumptionHistory.get(day*24+hour);
     }
+    
+    int getConsumptionSize(){
+     	return consumptionHistory.size();
+    }
+    
     // Returns the CustomerInfo for this record
     CustomerInfo getCustomerInfo ()
     {
@@ -1061,6 +1083,7 @@ private TariffSpecification worsen(TariffSpecification spec)
       while(consumptionHistory.size() < rawIndex-1)
     	  consumptionHistory.add(0.0);
       consumptionHistory.add(kwhPerCustomer);
+      //System.out.println("Size so far: "+consumptionHistory.size());
       
       double oldUsage = usage[index];
       if (oldUsage == 0.0) {
