@@ -383,7 +383,6 @@ private void printTariffRepo(){
 	    	  }
 	      }
 	    }*/
-	    System.out.println("SOLAR"+result);
 	    return result; 
   }
   
@@ -393,14 +392,15 @@ private void printTariffRepo(){
 	    double result = 0.0;
 	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
 	      for (CustomerRecord record : customerMap.values()) {
-	    	  if((record.getUsage(index) < 0) && (record.getCustomerInfo().getPowerType()==PowerType.WIND_PRODUCTION))
-	    		  {
-		    		  result += record.getUsage(index); //Sum up all the production (Negative)
-	    		  }
-	    	  	
+	    	  if (record.getCustomerInfo()!=null){
+		    	  if(record.getCustomerInfo().getPowerType()==PowerType.WIND_PRODUCTION){
+		    		  if (record.getUsage(index)<0){
+		    			  result += Math.abs(record.getUsage(index));
+		    		  }		    		  
+		    	  }	
+	    	  }
 	      }
 	    }
-	    System.out.println("Wind"+result);
 	    return result; 
   }
   
