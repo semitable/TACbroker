@@ -332,6 +332,7 @@ private void printTariffRepo(){
 	  return result;
   }
   
+  
   /*Returns Hour given time slot*/
   public int getHour(int index){
 	  return index - getDay(index)*24;
@@ -341,6 +342,36 @@ private void printTariffRepo(){
  public int getDay(int index){
 	 return index/24;
   }
+ 
+ /*Calculates the Consumption for the customers with solar panels*/
+ public double getEConsumed_Solar_Customers(int index)
+ {
+	    double result = 0.0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if(record.getCustomerInfo().getPowerType()==PowerType.SOLAR_PRODUCTION){
+		    	  if(record.getUsage(index) > 0)
+		    		  result += record.getUsage(index); 
+	    	  }
+	      }
+	    }
+	    return result; 
+ }
+ 
+ /*Calculates the Consumption for the customers with wind turbines*/
+ public double getEConsumed_Wind_Customers(int index)
+ {
+	    double result = 0.0;
+	    for (HashMap<CustomerInfo, CustomerRecord> customerMap : customerSubscriptions.values()) {
+	      for (CustomerRecord record : customerMap.values()) {
+	    	  if(record.getCustomerInfo().getPowerType()==PowerType.WIND_PRODUCTION){
+		    	  if(record.getUsage(index) > 0)
+		    		  result += record.getUsage(index); 
+	    	  }
+	      }
+	    }
+	    return result; 
+ }
  
   /*Calculates the total Solar Energy production of the customers*/
   public double getSolarEnergy(int index)

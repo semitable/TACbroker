@@ -27,7 +27,9 @@ public interface PortfolioManager
    */
   public double collectUsage (int index);
 
-public double getTotalStorage(int index); 
-public double getSolarEnergy(int index);
-public double getWindEnergy(int index);
+	public double getTotalStorage(int index); 
+	public double getSolarEnergy(int index);
+	public double getWindEnergy(int index);
+	public double getEConsumed_Solar_Customers(int index);
+	public double getEConsumed_Wind_Customers(int index);
 }

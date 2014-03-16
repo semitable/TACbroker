@@ -339,86 +339,19 @@ implements MarketManager, Initializable, Activatable
 	System.out.println("Current TimeSlot:"+CurrentTimeSlot);
 	System.out.println("Order for TimeSlot:"+timeslot);
 	
-	int count1=0;
-	int count2=0;
-	double AVG_Solar_Sunny=0;
-	double AVG_Solar_Cloudy=0;
-	int count3=0;
-	int count4=0;
-	double AVG_Wind_Windy=0;
-	double AVG_Wind_No_Windy=0;
-	
-	/*See the previous slots how much was the AVG solar power based on weather 
-	 * we see only few slots before so the number of our customers-producers will be the same*/
-	if (CurrentTimeSlot>350){
-		for (int i=24;i<35;i++){
-			double WP = getWeatherReport(CurrentTimeSlot-i).getCloudCover();
-			if (WP>0.5){
-				AVG_Solar_Cloudy += portfolioManager.getSolarEnergy(CurrentTimeSlot-i);
-				count2++;
-			}
-			else{
-				AVG_Solar_Sunny+= portfolioManager.getSolarEnergy(CurrentTimeSlot-i);
-				count1++;
-			}
-		}
-		if (count1>0){
-			AVG_Solar_Sunny=AVG_Solar_Sunny/count1;
-		}
-		if (count2>0){
-			AVG_Solar_Cloudy=AVG_Solar_Cloudy/count2;
-		}
-		
-		System.out.println("AVG Solar Energy Sunny Day:"+AVG_Solar_Sunny);
-		System.out.println("AVG Solar Energy Cloudy Day:"+AVG_Solar_Cloudy);
-		
-		double FR_direction = getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindDirection();
-
-		for (int i=24;i<35;i++){
-			double WP = getWeatherReport(CurrentTimeSlot-i).getWindSpeed();
-			double WP_direction = getWeatherReport(CurrentTimeSlot-i).getWindDirection();
-			if (WP>2.5){
-				if (Math.abs(WP_direction-FR_direction)<30){
-					AVG_Wind_Windy += portfolioManager.getWindEnergy(CurrentTimeSlot-i);
-					count3++;
-				}
-			}
-			else{
-				if (Math.abs(WP_direction-FR_direction)<30){
-					AVG_Wind_No_Windy+= portfolioManager.getWindEnergy(CurrentTimeSlot-i);
-					count4++;
-				}
-			}
-		}
-		if (count3>0){
-			AVG_Wind_Windy=AVG_Wind_Windy/count3;
-		}
-		if (count4>0){
-			AVG_Wind_No_Windy=AVG_Wind_No_Windy/count4;
-		}
-		
-		System.out.println("AVG Wind Energy Windy Day:"+AVG_Wind_Windy);
-		System.out.println("AVG Wind Energy Tranquil Day:"+AVG_Wind_No_Windy);
-	}
-	
 	/*Buy additional energy up to the 40% percent of the total storage of customers*/
 	double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
 	neededMWh=+CustomerStorageCapacity*0.4;
 	System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
 	
 	/*Buy Additional energy based of lack of solar production*/
-	if (getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getCloudCover() <0.5){  //if it is going to be cloudy
-		if (AVG_Solar_Sunny-AVG_Solar_Cloudy>0){											//might have change the customers so cloudy days might have more production
-			neededMWh += AVG_Solar_Sunny-AVG_Solar_Cloudy;									//buys addition energy because of lack of solar production
-		}
-	}
+	neededMWh += AVG_Solar_Production(timeslot,getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getCloudCover());
+	neededMWh += AVG_Solar_Consuption(timeslot,getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getCloudCover());
+	
 	
 	/*Buy Additional energy based of lack of wind production*/
-	if (getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindSpeed()>2.5){	//windy day
-		if (AVG_Wind_Windy>AVG_Wind_No_Windy){												//might have change the customers so cloudy days might have more production
-			neededMWh +=AVG_Wind_Windy-AVG_Wind_No_Windy;									//buys addition energy because of lack of solar production
-		}
-	}
+	neededMWh += AVG_Wind_Production(timeslot,getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindSpeed());
+	neededMWh += AVG_Wind_Consuption(timeslot,getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindSpeed());
 	
 	
     if (CurrentTimeSlot==timeslot){
@@ -445,10 +378,208 @@ implements MarketManager, Initializable, Activatable
     	    }
     }
     
-   
     lastOrder.put(timeslot, order);
     broker.sendMessage(order);
   }
+  
+  /*
+   * Calculate the AVG Consumption for Customers with Solar Panels
+   */
+  double AVG_Solar_Consuption (int timeslot, double CloudCover){
+	  int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
+		 
+		 int count1=0;
+		 int count2=0;
+		 double AVG_Solar_Sunny_Consuption=0;
+		 double AVG_Solar_Cloudy_Consuption=0;
+		 double Extra_Power=0;
+		
+		 /*See the previous slots how much was the AVG solar power based on weather 
+		  * we see only few slots before so the number of our customers-producers will be the same*/
+		 if (CurrentTimeSlot>350){
+			for (int i=24;i<35;i++){
+				double WP = getWeatherReport(CurrentTimeSlot-i).getCloudCover();
+				if (WP>0.5){
+					AVG_Solar_Cloudy_Consuption += portfolioManager.getEConsumed_Solar_Customers(CurrentTimeSlot-i);
+					count2++;
+				}
+				else{
+					AVG_Solar_Sunny_Consuption+= portfolioManager.getEConsumed_Solar_Customers(CurrentTimeSlot-i);
+					count1++;
+				}
+			}
+			if (count1>0){
+				AVG_Solar_Sunny_Consuption=AVG_Solar_Sunny_Consuption/count1;
+			}
+			if (count2>0){
+				AVG_Solar_Cloudy_Consuption=AVG_Solar_Cloudy_Consuption/count2;
+			}
+		 }
+		
+		/*Buy Additional energy based of lack of solar production*/
+		if (CloudCover >0.5){  											//if it is going to be cloudy
+			if (AVG_Solar_Cloudy_Consuption-AVG_Solar_Sunny_Consuption>0){											//might have change the customers so cloudy days might have more production
+				Extra_Power += AVG_Solar_Cloudy_Consuption-AVG_Solar_Sunny_Consuption;									//buys addition energy because of lack of solar production
+			}
+		}
+		
+		return Extra_Power;
+  }
+  
+  
+  /*
+   * Calculate the AVG Solar Production for a few timeslots before. 
+   */
+double AVG_Solar_Production (int timeslot, double CloudCover){
+	
+	 int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
+	 
+	 int count1=0;
+	 int count2=0;
+	 double AVG_Solar_Sunny_Production=0;
+	 double AVG_Solar_Cloudy_Production=0;
+	 double Extra_Power=0;
+	
+	 /*See the previous slots how much was the AVG solar power based on weather 
+	  * we see only few slots before so the number of our customers-producers will be the same*/
+	 if (CurrentTimeSlot>350){
+		for (int i=24;i<35;i++){
+			double WP = getWeatherReport(CurrentTimeSlot-i).getCloudCover();
+			if (WP>0.5){
+				AVG_Solar_Cloudy_Production += portfolioManager.getSolarEnergy(CurrentTimeSlot-i);
+				count2++;
+			}
+			else{
+				AVG_Solar_Sunny_Production+= portfolioManager.getSolarEnergy(CurrentTimeSlot-i);
+				count1++;
+			}
+		}
+		if (count1>0){
+			AVG_Solar_Sunny_Production=AVG_Solar_Sunny_Production/count1;
+		}
+		if (count2>0){
+			AVG_Solar_Cloudy_Production=AVG_Solar_Cloudy_Production/count2;
+		}
+	 }
+	
+	/*Buy Additional energy based of lack of solar production*/
+	if (CloudCover >0.5){  											//if it is going to be cloudy
+		if (AVG_Solar_Sunny_Production-AVG_Solar_Cloudy_Production>0){											//might have change the customers so cloudy days might have more production
+			Extra_Power += AVG_Solar_Sunny_Production-AVG_Solar_Cloudy_Production;									//buys addition energy because of lack of solar production
+		}
+	}
+	
+	return Extra_Power;
+}
+
+/*
+ * Calculate the AVG Wind Production for a few timeslots before. 
+ */
+
+/*
+ * Calculate the AVG Consumption for Customers with Wind Turbines
+ */
+double AVG_Wind_Consuption(int timeslot, double WindSpeed){
+	
+	int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
+	 
+	double Extra_Power=0;
+	int count3=0;
+	int count4=0;
+	double AVG_Wind_Windy=0;
+	double AVG_Wind_No_Windy=0;
+		
+	/*See the previous slots how much was the AVG solar power based on weather 
+	 * we see only few slots before so the number of our customers-producers will be the same*/
+	if (CurrentTimeSlot>350){
+
+		double FR_direction = getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindDirection();
+
+		for (int i=24;i<35;i++){
+			double WP = getWeatherReport(CurrentTimeSlot-i).getWindSpeed();
+			double WP_direction = getWeatherReport(CurrentTimeSlot-i).getWindDirection();
+			if (WP>2.5){
+				if (Math.abs(WP_direction-FR_direction)<30){
+					AVG_Wind_Windy += portfolioManager.getEConsumed_Wind_Customers(CurrentTimeSlot-i);
+					count3++;
+				}
+			}
+			else{
+				if (Math.abs(WP_direction-FR_direction)<30){
+					AVG_Wind_No_Windy+= portfolioManager.getEConsumed_Wind_Customers(CurrentTimeSlot-i);
+					count4++;
+				}
+			}
+		}
+		if (count3>0){
+			AVG_Wind_Windy=AVG_Wind_Windy/count3;
+		}
+		if (count4>0){
+			AVG_Wind_No_Windy=AVG_Wind_No_Windy/count4;
+		}
+			
+	}
+	
+	/*Buy Additional energy based on lack of wind production*/
+	if (WindSpeed<2.5){	                                                                    //not a windy day
+		if (AVG_Wind_Windy<AVG_Wind_No_Windy){												//might have change the customers so cloudy days might have more production
+			Extra_Power +=AVG_Wind_No_Windy-AVG_Wind_Windy;									//buys addition energy because of lack of solar production
+		}
+	}
+	
+	return Extra_Power;
+}
+
+double AVG_Wind_Production (int timeslot, double WindSpeed){
+	
+	int CurrentTimeSlot = timeslotRepo.currentSerialNumber();
+	 
+	double Extra_Power=0;
+	int count3=0;
+	int count4=0;
+	double AVG_Wind_Windy=0;
+	double AVG_Wind_No_Windy=0;
+		
+	/*See the previous slots how much was the AVG solar power based on weather 
+	 * we see only few slots before so the number of our customers-producers will be the same*/
+	if (CurrentTimeSlot>350){
+
+		double FR_direction = getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getWindDirection();
+
+		for (int i=24;i<35;i++){
+			double WP = getWeatherReport(CurrentTimeSlot-i).getWindSpeed();
+			double WP_direction = getWeatherReport(CurrentTimeSlot-i).getWindDirection();
+			if (WP>2.5){
+				if (Math.abs(WP_direction-FR_direction)<30){
+					AVG_Wind_Windy += portfolioManager.getWindEnergy(CurrentTimeSlot-i);
+					count3++;
+				}
+			}
+			else{
+				if (Math.abs(WP_direction-FR_direction)<30){
+					AVG_Wind_No_Windy+= portfolioManager.getWindEnergy(CurrentTimeSlot-i);
+					count4++;
+				}
+			}
+		}
+		if (count3>0){
+			AVG_Wind_Windy=AVG_Wind_Windy/count3;
+		}
+		if (count4>0){
+			AVG_Wind_No_Windy=AVG_Wind_No_Windy/count4;
+		}
+			
+	}
+	
+	/*Buy Additional energy based of lack of solar production*/
+	if (WindSpeed<2.5){	                                                                    //not a windy day
+		if (AVG_Wind_Windy>AVG_Wind_No_Windy){												//might have change the customers so cloudy days might have more production
+			Extra_Power +=AVG_Wind_Windy-AVG_Wind_No_Windy;									//buys addition energy because of lack of solar production
+		}
+	}
+	
+	return Extra_Power;
+}
 
   /**
    * Computes a limit price with a random element. 
