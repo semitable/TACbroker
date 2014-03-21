@@ -212,6 +212,9 @@ private void printTariffRepo(){
     if (record == null) {
       record = new CustomerRecord(customer);
       customerMap.put(customer, record);
+      //XXX
+      customerProfiles.put(type, customerMap);
+      
     }
     return record;
   }
@@ -225,6 +228,10 @@ private void printTariffRepo(){
   {
     HashMap<CustomerInfo, CustomerRecord> customerMap =
         customerSubscriptions.get(spec);
+    //XXX
+    if (customer==null){
+    	System.err.println("!!!!!!!!!!WATCH OUT, NULL CUSTOMER!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
     if (customerMap == null) {
       customerMap = new HashMap<CustomerInfo, CustomerRecord>();
       customerSubscriptions.put(spec, customerMap);
@@ -236,6 +243,8 @@ private void printTariffRepo(){
           new CustomerRecord(getCustomerRecordByPowerType(spec.getPowerType(),
                                                           customer));
       customerMap.put(customer, record);
+      //XXX
+      customerSubscriptions.put(spec, customerMap);
     }
     return record;
   }
@@ -537,31 +546,42 @@ public int getTotalCustomers(PowerType pt)
       }
     }
     TariffTransaction.Type txType = ttx.getTxType();
-    CustomerRecord record = getCustomerRecordByTariff(ttx.getTariffSpec(),
-                                                      ttx.getCustomerInfo());
-    if (TariffTransaction.Type.SIGNUP == txType) {
-      // keep track of customer counts
-      record.signup(ttx.getCustomerCount());
-    }
-    else if (TariffTransaction.Type.WITHDRAW == txType) {
-      // customers presumably found a better deal
-      record.withdraw(ttx.getCustomerCount());
-    }
-    else if (TariffTransaction.Type.PRODUCE == txType) {
-      // if ttx count and subscribe population don't match, it will be hard
-      // to estimate per-individual production
-      if (ttx.getCustomerCount() != record.subscribedPopulation) {
-        log.warn("production by subset " + ttx.getCustomerCount() +
-                 " of subscribed population " + record.subscribedPopulation);
-      }
-      record.produceConsume(ttx.getKWh(), ttx.getPostedTime());
-    }
-    else if (TariffTransaction.Type.CONSUME == txType) {
-      if (ttx.getCustomerCount() != record.subscribedPopulation) {
-        log.warn("consumption by subset " + ttx.getCustomerCount() +
-                 " of subscribed population " + record.subscribedPopulation);
-      }
-      record.produceConsume(ttx.getKWh(), ttx.getPostedTime());      
+    
+    //XXX
+    //added check for null customerInfo.
+    //if null then do nothing more(no record creation)
+    if(ttx.getCustomerInfo()==null){
+    	System.err.println("!!!!!!!!!!!!!TARIFF transaction: NULL CUSTOMER!!!!!!!!!!!!!,count:"+ttx.getCustomerCount());
+    	log.error("TariffTransaction with no customer info (getcustomerInfo() returns null)");
+    }else{
+
+    	CustomerRecord record = getCustomerRecordByTariff(ttx.getTariffSpec(),
+    			ttx.getCustomerInfo());
+
+    	if (TariffTransaction.Type.SIGNUP == txType) {
+    		// keep track of customer counts
+    		record.signup(ttx.getCustomerCount());
+    	}
+    	else if (TariffTransaction.Type.WITHDRAW == txType) {
+    		// customers presumably found a better deal
+    		record.withdraw(ttx.getCustomerCount());
+    	}
+    	else if (TariffTransaction.Type.PRODUCE == txType) {
+    		// if ttx count and subscribe population don't match, it will be hard
+    		// to estimate per-individual production
+    		if (ttx.getCustomerCount() != record.subscribedPopulation) {
+    			log.warn("production by subset " + ttx.getCustomerCount() +
+    					" of subscribed population " + record.subscribedPopulation);
+    		}
+    		record.produceConsume(ttx.getKWh(), ttx.getPostedTime());
+    	}
+    	else if (TariffTransaction.Type.CONSUME == txType) {
+    		if (ttx.getCustomerCount() != record.subscribedPopulation) {
+    			log.warn("consumption by subset " + ttx.getCustomerCount() +
+    					" of subscribed population " + record.subscribedPopulation);
+    		}
+    		record.produceConsume(ttx.getKWh(), ttx.getPostedTime());      
+    	}
     }
   }
 
@@ -1040,7 +1060,7 @@ private TariffSpecification worsen(TariffSpecification spec)
     CustomerInfo customer;
     int subscribedPopulation = 0;
     double[] usage;
-    List<Double>[] custHist;
+    ArrayList<Double>[] custHist;
     List<Double> consumptionHistory; 
     double alpha = 0.3;
     
@@ -1048,33 +1068,30 @@ private TariffSpecification worsen(TariffSpecification spec)
     /**
      * Creates an empty record
      */
-    CustomerRecord (CustomerInfo customer)
+    @SuppressWarnings("unchecked")
+	CustomerRecord (CustomerInfo customer)
     {
       super();
       this.customer = customer;
       this.usage = new double[brokerContext.getUsageRecordLength()];
       this.consumptionHistory = new ArrayList<Double>();
-      this.custHist=(List<Double>[])new List[168];
+      this.custHist=(ArrayList<Double>[])new ArrayList[168];
       
       for(int i=0;i<168;i++){
 				custHist[i]=new ArrayList<Double>();
-				
       }
 
     }
     
-    CustomerRecord (CustomerRecord oldRecord)
+    @SuppressWarnings("unchecked")
+	CustomerRecord (CustomerRecord oldRecord)
     {
       super();
       this.customer = oldRecord.customer;
       this.usage = Arrays.copyOf(oldRecord.usage, brokerContext.getUsageRecordLength());
       this.consumptionHistory = new ArrayList<Double>();
-      this.custHist=(List<Double>[])new List[168];
+      this.custHist=(ArrayList<Double>[])new ArrayList[168];
       this.custHist = ( oldRecord.custHist == null ? null : oldRecord.custHist.clone() );
-      
-      
-
- 
     }
     
     double getConsumption(int day, int hour)
@@ -1140,7 +1157,10 @@ private TariffSpecification worsen(TariffSpecification spec)
                 ", customer " + customer.getName());
       
       custHist[index].add(kwh);
-      
+    }
+    
+    ArrayList<Double> getCustHist(int index){
+    	return custHist[index];
     }
     
     double getUsage (int index)
