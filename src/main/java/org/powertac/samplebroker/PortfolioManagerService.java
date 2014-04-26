@@ -324,6 +324,7 @@ private void printTariffRepo(){
 	    		  result += record.getUsage(index); //Sum up all the consumption (Positive)
 	      }
 	    }
+	    result =result + getTotalStorage(index)*0.1;		//buy more power because of storage
 	    return result; 
   }
   

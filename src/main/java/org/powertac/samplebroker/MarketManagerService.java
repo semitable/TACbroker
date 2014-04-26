@@ -286,7 +286,7 @@ implements MarketManager, Initializable, Activatable
     for (Timeslot timeslot : timeslotRepo.enabledTimeslots()) {
       int index = (timeslot.getSerialNumber()) % broker.getUsageRecordLength();
       neededKWh = portfolioManager.collectUsage(index);
-      submitOrder2(neededKWh, timeslot.getSerialNumber());
+      submitOrder(neededKWh, timeslot.getSerialNumber());
     }
   }
 
@@ -339,10 +339,11 @@ implements MarketManager, Initializable, Activatable
 	System.out.println("Current TimeSlot:"+CurrentTimeSlot);
 	System.out.println("Order for TimeSlot:"+timeslot);
 	
+	
 	/*Buy additional energy up to the 40% percent of the total storage of customers*/
-	double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
+	/*double CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);
 	neededMWh=+CustomerStorageCapacity*0.4;
-	System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);
+	System.out.println("Extra buy:"+CustomerStorageCapacity*0.4);*/ //this went to portfolioManger
 	
 	/*Buy Additional energy based of lack of solar production*/
 	neededMWh += AVG_Solar_Production(timeslot,getWeatherForecast(CurrentTimeSlot-360).getPredictions().get(timeslot-CurrentTimeSlot-1).getCloudCover());
@@ -368,11 +369,11 @@ implements MarketManager, Initializable, Activatable
     	    else						//if we want to sell
     	    {
     	    	System.out.println("Sell Energy");
-    	    	CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);	
+    	    	//CustomerStorageCapacity = portfolioManager.getTotalStorage(timeslot);	
     	    	//We always buy more energy 23 slots ahead. The extra energy is equal to the 40% of the storage
-    	    	if (timeslotRepo.currentTimeslot().getSerialNumber()!= timeslot+23){
-    	    		CustomerStorageCapacity=0;
-    	    	}
+    	    	//if (timeslotRepo.currentTimeslot().getSerialNumber()!= timeslot+23){
+    	    	//	CustomerStorageCapacity=0;
+    	    	//}
     	    	
     	    	order = new Order(broker.getBroker(), timeslot, neededMWh, limitPrice);
     	    }

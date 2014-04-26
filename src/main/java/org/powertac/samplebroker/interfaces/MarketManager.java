@@ -15,6 +15,8 @@
  */
 package org.powertac.samplebroker.interfaces;
 
+import org.powertac.common.WeatherReport;
+
 /**
  * Encapsulates broker market interactions.
  * @author John Collins
@@ -26,4 +28,5 @@ public interface MarketManager
    * Returns the mean price observed in the market
    */
   public double getMeanMarketPrice ();
+  public WeatherReport getWeatherReport(int timeslotIndex);
 }
